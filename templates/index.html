@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Control de Raspberry Pi</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/estilos.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="encabezado">
+        <h1>Control de dispositivos</h1>
+        <p>Raspberry Pi 3 · Control por voz</p>
+    </header>
+
+    <main class="panel-principal">
+
+        <section class="panel">
+            <h2>Control por voz</h2>
+
+            <p id="estado-microfono" aria-live="polite">
+                Micrófono apagado
+            </p>
+
+            <div class="botones-microfono">
+                <button id="activar-microfono" type="button">
+                    🎙️ Activar micrófono
+                </button>
+
+                <button
+                    id="apagar-microfono"
+                    type="button"
+                    disabled
+                >
+                    Apagar micrófono
+                </button>
+            </div>
+
+            <p class="texto-secundario">
+                Ejemplos: «Encender LED uno»,
+                «Servo a noventa grados».
+            </p>
+
+            <p id="resultado-voz" aria-live="polite">
+                Esperando un comando.
+            </p>
+        </section>
+
+
+        <section class="panel">
+            <h2>Iluminación</h2>
+
+            <p class="texto-secundario">
+                Cada LED se controla de forma independiente.
+            </p>
+
+            <div id="lista-leds" class="lista-leds">
+                Cargando LED...
+            </div>
+        </section>
+
+
+        <section class="panel">
+            <h2>Servomotor</h2>
+
+            <div class="angulo">
+                <span>Posición solicitada</span>
+                <strong id="valor-angulo">90°</strong>
+            </div>
+
+            <label for="control-servo">
+                Ángulo del servo
+            </label>
+
+            <input
+                id="control-servo"
+                type="range"
+                min="0"
+                max="180"
+                step="1"
+                value="90"
+            >
+
+            <div class="extremos">
+                <span>0°</span>
+                <span>90°</span>
+                <span>180°</span>
+            </div>
+
+            <button id="enviar-servo" type="button">
+                Aplicar posición
+            </button>
+
+            <p id="estado-servo" aria-live="polite">
+                Posición inicial: 90°
+            </p>
+        </section>
+
+
+        <section class="panel panel-distancia">
+            <h2>Sensor ultrasónico</h2>
+
+            <p class="texto-secundario">
+                Distancia medida al objeto más próximo.
+            </p>
+
+            <div class="medicion">
+                <strong id="distancia">--</strong>
+                <span>cm</span>
+            </div>
+
+            <p id="estado-sensor" aria-live="polite">
+                Esperando medición...
+            </p>
+
+            <p class="texto-secundario">
+                Actualización automática.
+            </p>
+        </section>
+
+    </main>
+
+    <script
+        src="{{ url_for('static', filename='js/voz.js') }}"
+        defer
+    ></script>
+
+</body>
+</html>

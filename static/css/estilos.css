@@ -1,0 +1,215 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f4f8;
+    color: #202938;
+}
+
+.encabezado {
+    padding: 28px 20px;
+    text-align: center;
+    background: #17243a;
+    color: white;
+}
+
+.encabezado h1 {
+    margin: 0 0 8px;
+}
+
+.encabezado p {
+    margin: 0;
+    color: #cbd5e1;
+}
+
+.panel-principal {
+    width: min(1100px, 92%);
+    margin: 28px auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.panel {
+    padding: 24px;
+    background: white;
+    border: 1px solid #dce3ec;
+    border-radius: 14px;
+    min-width: 0;
+}
+
+.panel h2 {
+    margin-top: 0;
+    font-size: 21px;
+}
+
+.texto-secundario {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+button {
+    min-height: 44px;
+    padding: 11px 15px;
+    border: 0;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 3px solid #f59e0b;
+    outline-offset: 3px;
+}
+
+.botones-microfono {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+#activar-microfono {
+    background: #15803d;
+}
+
+#apagar-microfono {
+    background: #b91c1c;
+}
+
+#resultado-voz,
+#estado-servo,
+#estado-sensor {
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+}
+
+.lista-leds {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.tarjeta-led {
+    padding: 14px;
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+}
+
+.fila-led {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.indicador-led {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 13px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.indicador-led.encendido {
+    background: #eab308;
+    box-shadow: 0 0 8px #eab30880;
+}
+
+.estado-led {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.botones-led {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.botones-led button {
+    flex: 1;
+    padding: 9px;
+    font-size: 13px;
+}
+
+.boton-apagar {
+    background: #64748b;
+}
+
+.angulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+#valor-angulo {
+    font-size: 28px;
+}
+
+#control-servo {
+    display: block;
+    width: 100%;
+    margin: 22px 0;
+    cursor: pointer;
+}
+
+.extremos {
+    display: flex;
+    justify-content: space-between;
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 18px;
+}
+
+#enviar-servo {
+    width: 100%;
+}
+
+.panel-distancia {
+    text-align: center;
+}
+
+.medicion {
+    margin: 24px 0 10px;
+}
+
+.medicion strong {
+    font-size: clamp(40px, 7vw, 64px);
+    font-weight: 700;
+}
+
+.medicion span {
+    font-size: 22px;
+    color: #64748b;
+}
+
+@media (max-width: 650px) {
+    .panel-principal {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .panel {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 360px) {
+    .lista-leds {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
