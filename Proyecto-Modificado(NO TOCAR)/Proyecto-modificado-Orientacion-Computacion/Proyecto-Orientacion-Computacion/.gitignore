@@ -1,0 +1,17 @@
+# Entorno local de Python
+env/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Modelo Vosk (se instala una vez en la Raspberry Pi)
+modelos/vosk-model-small-es-0.42/
+
+# Certificados locales; nunca compartir claves privadas
+certs/
+*.pem
+*.key
+
+# Archivos temporales y ZIP
+*.zip
+*.log

@@ -213,3 +213,23 @@ input:focus-visible {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+.estado-correcto {
+    color: #15803d;
+}
+
+.estado-advertencia {
+    color: #b45309;
+}
+
+#alternar-sensor {
+    width: 100%;
+}
+
+#alternar-sensor.boton-apagar {
+    background: #b91c1c;
+}
+
+#estado-reconocimiento {
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+}

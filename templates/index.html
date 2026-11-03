@@ -16,7 +16,7 @@
 
     <header class="encabezado">
         <h1>Control de dispositivos</h1>
-        <p>Raspberry Pi 3 · Control por voz</p>
+        <p>Raspberry Pi 3 · Control por voz offline</p>
     </header>
 
     <main class="panel-principal">
@@ -33,25 +33,28 @@
                     🎙️ Activar micrófono
                 </button>
 
-                <button
-                    id="apagar-microfono"
-                    type="button"
-                    disabled
-                >
+                <button id="apagar-microfono" type="button" disabled>
                     Apagar micrófono
                 </button>
             </div>
 
-            <p class="texto-secundario">
-                Ejemplos: «Encender LED uno»,
-                «Servo a noventa grados».
+            <p id="estado-reconocimiento" class="texto-secundario" aria-live="polite">
+                Comprobando reconocimiento offline...
             </p>
+
+            <p class="texto-secundario">
+                Todos los comandos deben empezar con «comando». Ejemplos:
+                «comando LED uno encender», «comando giro a 45 grados»,
+                «comando activar sensor» y «comando desactivar sensor».
+            </p>
+
+            <p class="texto-secundario"><strong>Texto que interpreta Vosk en tiempo real:</strong></p>
+            <p id="texto-vosk" aria-live="polite">Todavía no se detecta voz.</p>
 
             <p id="resultado-voz" aria-live="polite">
                 Esperando un comando.
             </p>
         </section>
-
 
         <section class="panel">
             <h2>Iluminación</h2>
@@ -64,7 +67,6 @@
                 Cargando LED...
             </div>
         </section>
-
 
         <section class="panel">
             <h2>Servomotor</h2>
@@ -102,25 +104,28 @@
             </p>
         </section>
 
-
         <section class="panel panel-distancia">
             <h2>Sensor ultrasónico</h2>
 
             <p class="texto-secundario">
-                Distancia medida al objeto más próximo.
+                Activá la medición para ver la distancia en tiempo real.
             </p>
 
-            <div class="medicion">
+            <div class="medicion" aria-live="polite">
                 <strong id="distancia">--</strong>
                 <span>cm</span>
             </div>
 
             <p id="estado-sensor" aria-live="polite">
-                Esperando medición...
+                Medición desactivada.
             </p>
 
+            <button id="alternar-sensor" type="button">
+                Activar medición
+            </button>
+
             <p class="texto-secundario">
-                Actualización automática.
+                Por voz: «comando activar sensor» o «comando desactivar sensor».
             </p>
         </section>
 

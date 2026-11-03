@@ -31,6 +31,7 @@ estados_led = {
 }
 
 angulo_servo = 90
+sensor_activo = False
 
 # Protege las operaciones de hardware
 bloqueo = threading.RLock()
@@ -124,8 +125,23 @@ def obtener_angulo_servo():
 # SENSOR ULTRASONICO HC-SR04
 # ==========================================
 
+def configurar_sensor(activo):
+    """Activa o pausa las mediciones del sensor ultrasónico."""
+    global sensor_activo
+    with bloqueo:
+        sensor_activo = bool(activo)
+        return sensor_activo
+
+
+def sensor_esta_activo():
+    with bloqueo:
+        return sensor_activo
+
+
 def medir_distancia():
     with bloqueo:
+        if not sensor_activo:
+            return None
         GPIO.output(TRIG_PIN, GPIO.LOW)
         time.sleep(0.000002)
 
@@ -169,7 +185,8 @@ def medir_distancia():
 def obtener_estado():
     return {
         "leds": obtener_leds(),
-        "servo": obtener_angulo_servo()
+        "servo": obtener_angulo_servo(),
+        "sensor_activo": sensor_esta_activo(),
     }
 
 
