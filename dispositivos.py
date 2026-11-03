@@ -78,12 +78,54 @@ def controlar_led(numero, encender):
     return estados_led[numero]
 
 
-def obtener_leds():
+def alternar_led(numero):
+    """Invierte el LED consultando su salida actual, de forma atómica."""
+    numero = int(numero)
+    if numero not in LED_PINS:
+        raise ValueError("El LED solicitado no existe.")
+
     with bloqueo:
-        return {
-            numero: estado
-            for numero, estado in estados_led.items()
-        }
+        # Leer el pin evita depender de un estado viejo de la interfaz.
+        estado_actual = bool(GPIO.input(LED_PINS[numero]))
+        nuevo_estado = not estado_actual
+        GPIO.output(
+            LED_PINS[numero],
+            GPIO.HIGH if nuevo_estado else GPIO.LOW
+        )
+        estados_led[numero] = nuevo_estado
+        return nuevo_estado
+
+
+def controlar_todos_leds(encender):
+    """Enciende o apaga todos los LED dentro de una sola sección protegida.
+
+    Al hacerlo bajo el bloqueo, ninguna otra petición puede ver un estado
+    intermedio (por ejemplo, dos LED encendidos y dos apagados).
+    Devuelve una copia del estado de todos los LED: {numero: encendido}.
+    """
+    with bloqueo:
+        for numero, pin in LED_PINS.items():
+            GPIO.output(pin, GPIO.HIGH if encender else GPIO.LOW)
+            estados_led[numero] = bool(encender)
+
+        return dict(estados_led)
+
+
+def obtener_leds():
+    """Lee el estado actual de las salidas GPIO de los LED."""
+    with bloqueo:
+        estados_actuales = {}
+        for numero, pin in LED_PINS.items():
+            try:
+                # En un pin configurado como salida, GPIO.input permite leer
+                # el nivel lógico que está presente en esa salida.
+                estado = bool(GPIO.input(pin))
+                estados_led[numero] = estado
+            except Exception:
+                # Si la lectura falla, conservar el último estado registrado.
+                estado = bool(estados_led.get(numero, False))
+            estados_actuales[numero] = estado
+        return estados_actuales
 
 
 # ==========================================

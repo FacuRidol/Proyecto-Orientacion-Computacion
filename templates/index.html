@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
 
     <title>Control de Raspberry Pi</title>
 
@@ -10,127 +11,363 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='css/estilos.css') }}"
     >
+
+    <!-- Se carga acá (sin defer) para aplicar el tema antes de dibujar la página -->
+    <script src="{{ url_for('static', filename='js/tema.js') }}"></script>
 </head>
 
 <body>
 
     <header class="encabezado">
-        <h1>Control de dispositivos</h1>
-        <p>Raspberry Pi 3 · Control por voz offline</p>
+        <div class="encabezado-contenido">
+            <span class="marca-icono" aria-hidden="true">
+                <svg class="icono" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>
+            </span>
+
+            <div class="encabezado-titulos">
+                <h1>Control de dispositivos</h1>
+                <p>Raspberry Pi 3 · Control por voz offline</p>
+            </div>
+
+            <button
+                id="alternar-tema"
+                class="boton-tema"
+                type="button"
+                aria-label="Cambiar a tema oscuro"
+                title="Cambiar tema"
+            >
+                <svg class="icono icono-luna" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                <svg class="icono icono-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            </button>
+        </div>
     </header>
 
     <main class="panel-principal">
 
-        <section class="panel">
-            <h2>Control por voz</h2>
+        <!-- ============ CONTROL POR VOZ ============ -->
+        <section class="panel panel-voz" aria-labelledby="titulo-voz">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2"/></svg>
+                </span>
+                <div>
+                    <h2 id="titulo-voz">Control por voz</h2>
+                    <p class="panel-descripcion">Reconocimiento local con Vosk, sin enviar audio a internet.</p>
+                </div>
+            </header>
 
-            <p id="estado-microfono" aria-live="polite">
-                Micrófono apagado
-            </p>
+            <div class="voz-contenido">
 
-            <div class="botones-microfono">
-                <button id="activar-microfono" type="button">
-                    🎙️ Activar micrófono
-                </button>
+                <div class="voz-control">
+                    <p id="estado-microfono" class="estado-microfono" aria-live="polite">
+                        Micrófono apagado
+                    </p>
 
-                <button id="apagar-microfono" type="button" disabled>
-                    Apagar micrófono
-                </button>
+                    <div class="botones-microfono">
+                        <button id="activar-microfono" type="button">
+                            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
+                            Activar micrófono
+                        </button>
+
+                        <button id="apagar-microfono" type="button" disabled>
+                            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>
+                            Apagar micrófono
+                        </button>
+                    </div>
+
+                    <p id="estado-reconocimiento" class="aviso" aria-live="polite">
+                        Comprobando reconocimiento offline...
+                    </p>
+                </div>
+
+                <div class="voz-salida">
+                    <div class="bloque-texto">
+                        <span class="etiqueta">Texto que interpreta Vosk en tiempo real</span>
+                        <p id="texto-vosk" aria-live="polite">Todavía no se detecta voz.</p>
+                    </div>
+
+                    <div class="bloque-texto bloque-resultado">
+                        <span class="etiqueta">Resultado del comando</span>
+                        <p id="resultado-voz" aria-live="polite">
+                            Esperando un comando.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ============ AYUDA DE COMANDOS ============
+                     Las cuatro listas se generan a partir de comandos_ayuda.py.
+                     La lógica de mostrar y ocultar está en static/js/ayuda.js. -->
+                {% set iconos_ayuda = {
+                    "leds": '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/>',
+                    "servo": '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+                    "sensor": '<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/>',
+                    "generales": '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
+                } %}
+                <div class="voz-ayuda">
+                    <div class="ayuda-cabecera">
+                        <p class="texto-secundario">
+                            Todos los comandos empiezan con «comando». Decí «comando ayuda» para abrir la lista.
+                        </p>
+
+                        <button
+                            id="boton-ayuda"
+                            class="boton-ayuda"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="menu-ayuda"
+                        >
+                            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+                            Ayuda de comandos
+                            <svg class="icono icono-flecha" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                    </div>
+
+                    <div id="menu-ayuda" class="menu-ayuda" hidden>
+                        <div class="menu-ayuda-categorias" role="group" aria-label="Categorías de comandos">
+                            {% for clave, categoria in ayuda.items() %}
+                            <button
+                                type="button"
+                                class="boton-categoria"
+                                data-categoria="{{ clave }}"
+                                aria-expanded="false"
+                                aria-controls="ayuda-{{ clave }}"
+                            >
+                                <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">{{ iconos_ayuda.get(clave, iconos_ayuda["generales"])|safe }}</svg>
+                                {{ categoria.titulo }}
+                            </button>
+                            {% endfor %}
+                        </div>
+
+                        {% for clave, categoria in ayuda.items() %}
+                        <section
+                            id="ayuda-{{ clave }}"
+                            class="lista-ayuda"
+                            data-categoria="{{ clave }}"
+                            aria-labelledby="titulo-ayuda-{{ clave }}"
+                            hidden
+                        >
+                            <h3 id="titulo-ayuda-{{ clave }}">{{ categoria.encabezado }}</h3>
+                            <p class="texto-secundario">{{ categoria.resumen }}</p>
+
+                            <ul class="lista-comandos-detalle">
+                                {% for item in categoria.comandos %}
+                                <li>
+                                    <span class="comando-frases">
+                                        {% for frase in item.frases %}
+                                        <code><span class="palabra-clave">comando</span> {{ frase }}</code>
+                                        {% endfor %}
+                                    </span>
+                                    <span class="comando-detalle">{{ item.detalle }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </section>
+                        {% endfor %}
+                    </div>
+                </div>
+
             </div>
-
-            <p id="estado-reconocimiento" class="texto-secundario" aria-live="polite">
-                Comprobando reconocimiento offline...
-            </p>
-
-            <p class="texto-secundario">
-                Todos los comandos deben empezar con «comando». Ejemplos:
-                «comando LED uno encender», «comando giro a 45 grados»,
-                «comando activar sensor» y «comando desactivar sensor».
-            </p>
-
-            <p class="texto-secundario"><strong>Texto que interpreta Vosk en tiempo real:</strong></p>
-            <p id="texto-vosk" aria-live="polite">Todavía no se detecta voz.</p>
-
-            <p id="resultado-voz" aria-live="polite">
-                Esperando un comando.
-            </p>
         </section>
 
-        <section class="panel">
-            <h2>Iluminación</h2>
-
-            <p class="texto-secundario">
-                Cada LED se controla de forma independiente.
-            </p>
+        <!-- ============ ILUMINACIÓN ============ -->
+        <section class="panel panel-leds" aria-labelledby="titulo-leds">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></svg>
+                </span>
+                <div>
+                    <h2 id="titulo-leds">Iluminación</h2>
+                    <p class="panel-descripcion">Cada LED se controla de forma independiente.</p>
+                </div>
+            </header>
 
             <div id="lista-leds" class="lista-leds">
                 Cargando LED...
             </div>
+
+            <!-- Los dos botones se pueden quitar sin afectar al resto de la página. -->
+            <div class="acciones-leds">
+                <button id="encender-todos" class="boton-encender" type="button">Encender todos</button>
+                <button id="apagar-todos" class="boton-apagar" type="button">Apagar todos</button>
+            </div>
         </section>
 
-        <section class="panel">
-            <h2>Servomotor</h2>
+        <!-- ============ SERVOMOTOR ============ -->
+        <section class="panel panel-servo" aria-labelledby="titulo-servo">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                </span>
+                <div>
+                    <h2 id="titulo-servo">Servomotor</h2>
+                    <p class="panel-descripcion">Posición entre 0° y 180°.</p>
+                </div>
+            </header>
 
-            <div class="angulo">
-                <span>Posición solicitada</span>
-                <strong id="valor-angulo">90°</strong>
+            <div class="servo-contenido">
+
+                <!-- Dial: la aguja es el cuerno de un servo que gira sobre su eje.
+                     Las clases dial-* y servo-* se colorean desde estilos.css. -->
+                <figure class="servo-indicador">
+                    <svg
+                        id="indicador-servo"
+                        class="dial-servo"
+                        viewBox="0 0 320 238"
+                        role="img"
+                        aria-label="Posición actual del servo: 90 grados"
+                    >
+                        <path class="dial-plano" d="M14 170 A146 146 0 0 1 306 170 Z"/>
+                        <path class="dial-pista" d="M34 170 A126 126 0 0 1 286 170"/>
+                        <path
+                            id="dial-progreso"
+                            class="dial-progreso"
+                            pathLength="180"
+                            d="M34 170 A126 126 0 0 1 286 170"
+                            style="stroke-dashoffset: 90"
+                        />
+
+                        <g class="dial-marcas">
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(0 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(10 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(20 160 170)"/>
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(30 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(40 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(50 160 170)"/>
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(60 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(70 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(80 160 170)"/>
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(90 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(100 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(110 160 170)"/>
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(120 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(130 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(140 160 170)"/>
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(150 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(160 160 170)"/>
+                        <line class="marca-menor" x1="48" y1="170" x2="57" y2="170" transform="rotate(170 160 170)"/>
+                        <line class="marca-mayor" x1="48" y1="170" x2="66" y2="170" transform="rotate(180 160 170)"/>
+                        </g>
+                        <g class="dial-numeros">
+                        <text x="88.0" y="159.0" dy=".35em">0</text>
+                        <text x="92.5" y="131.0" dy=".35em">30</text>
+                        <text x="121.0" y="102.5" dy=".35em">60</text>
+                        <text x="160.0" y="92.0" dy=".35em">90</text>
+                        <text x="199.0" y="102.5" dy=".35em">120</text>
+                        <text x="227.5" y="131.0" dy=".35em">150</text>
+                        <text x="232.0" y="159.0" dy=".35em">180</text>
+                        </g>
+
+                        <!-- Servo (cuerpo fijo, debajo del dial) -->
+                        <g class="servo-ilustracion">
+                            <rect class="servo-oreja" x="92" y="194" width="136" height="12" rx="3"/>
+                            <circle class="servo-agujero" cx="103" cy="200" r="3.2"/>
+                            <circle class="servo-agujero" cx="217" cy="200" r="3.2"/>
+                            <path class="servo-cable servo-cable-tierra" d="M189 228v9"/>
+                            <path class="servo-cable servo-cable-positivo" d="M194 228v9"/>
+                            <path class="servo-cable servo-cable-senal" d="M199 228v9"/>
+                            <rect class="servo-cuerpo" x="114" y="170" width="92" height="58" rx="8"/>
+                            <rect class="servo-placa" x="130" y="197" width="60" height="21" rx="4"/>
+                            <text class="servo-modelo" x="160" y="211" text-anchor="middle">SG90</text>
+                            <circle class="servo-carcasa" cx="160" cy="170" r="19"/>
+                        </g>
+
+                        <!-- Aguja: cuerno del servo. Se dibuja apuntando a 0° (izquierda)
+                             y voz.js la gira desde el eje con rotate(). -->
+                        <g id="aguja-servo" class="servo-aguja" style="transform: rotate(90deg)">
+                            <path class="servo-cuerno" d="M160 159 L55 167.5 L55 172.5 L160 181 Z"/>
+                            <circle class="servo-cuerno" cx="160" cy="170" r="12"/>
+                            <circle class="servo-agujero-cuerno" cx="124" cy="170" r="2.4"/>
+                            <circle class="servo-agujero-cuerno" cx="100" cy="170" r="2.4"/>
+                            <circle class="servo-agujero-cuerno" cx="76" cy="170" r="2.4"/>
+                            <circle class="servo-tapa" cx="160" cy="170" r="6.5"/>
+                            <path class="servo-tornillo" d="M157 170h6"/>
+                        </g>
+                    </svg>
+
+                    <figcaption class="servo-lectura">
+                        <span>Posición actual</span>
+                        <strong id="angulo-actual">90°</strong>
+                    </figcaption>
+                </figure>
+
+                <div class="servo-controles">
+                    <div class="angulo">
+                        <span>Posición solicitada</span>
+                        <strong id="valor-angulo">90°</strong>
+                    </div>
+
+                    <div class="control-deslizador">
+                        <label class="etiqueta" for="control-servo">
+                            Ángulo del servo
+                        </label>
+
+                        <input
+                            id="control-servo"
+                            type="range"
+                            min="0"
+                            max="180"
+                            step="1"
+                            value="90"
+                        >
+
+                        <div class="extremos">
+                            <span>0°</span>
+                            <span>90°</span>
+                            <span>180°</span>
+                        </div>
+                    </div>
+
+                    <p id="estado-servo" aria-live="polite">
+                        Posición inicial: 90°
+                    </p>
+
+                    <button id="enviar-servo" type="button">
+                        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Aplicar posición
+                    </button>
+                </div>
+
             </div>
-
-            <label for="control-servo">
-                Ángulo del servo
-            </label>
-
-            <input
-                id="control-servo"
-                type="range"
-                min="0"
-                max="180"
-                step="1"
-                value="90"
-            >
-
-            <div class="extremos">
-                <span>0°</span>
-                <span>90°</span>
-                <span>180°</span>
-            </div>
-
-            <button id="enviar-servo" type="button">
-                Aplicar posición
-            </button>
-
-            <p id="estado-servo" aria-live="polite">
-                Posición inicial: 90°
-            </p>
         </section>
 
-        <section class="panel panel-distancia">
-            <h2>Sensor ultrasónico</h2>
-
-            <p class="texto-secundario">
-                Activá la medición para ver la distancia en tiempo real.
-            </p>
+        <!-- ============ SENSOR ULTRASÓNICO ============ -->
+        <section class="panel panel-distancia" aria-labelledby="titulo-sensor">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></svg>
+                </span>
+                <div>
+                    <h2 id="titulo-sensor">Sensor ultrasónico</h2>
+                    <p class="panel-descripcion">Activá la medición para ver la distancia en tiempo real.</p>
+                </div>
+            </header>
 
             <div class="medicion" aria-live="polite">
                 <strong id="distancia">--</strong>
                 <span>cm</span>
             </div>
 
-            <p id="estado-sensor" aria-live="polite">
-                Medición desactivada.
-            </p>
+            <div class="sensor-acciones">
+                <p id="estado-sensor" aria-live="polite">
+                    Medición desactivada.
+                </p>
 
-            <button id="alternar-sensor" type="button">
-                Activar medición
-            </button>
+                <p class="texto-secundario">
+                    Por voz: «comando activar sensor» o «comando desactivar sensor».
+                </p>
 
-            <p class="texto-secundario">
-                Por voz: «comando activar sensor» o «comando desactivar sensor».
-            </p>
+                <button id="alternar-sensor" type="button">
+                    Activar medición
+                </button>
+            </div>
         </section>
 
     </main>
 
+    <script
+        src="{{ url_for('static', filename='js/ayuda.js') }}"
+        defer
+    ></script>
     <script
         src="{{ url_for('static', filename='js/voz.js') }}"
         defer

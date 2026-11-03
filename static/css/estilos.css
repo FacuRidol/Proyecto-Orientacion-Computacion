@@ -1,77 +1,475 @@
-* {
+/* ==========================================================================
+   ESTILOS · Control de dispositivos con Raspberry Pi
+
+   Cómo está organizado este archivo:
+     1. PERSONALIZACIÓN  → colores, tipografía y formas (¡editá solo esto!)
+     2. TEMA OSCURO      → mismas variables, con valores para fondo oscuro
+     3. VALORES DERIVADOS → se calculan solos a partir de los colores base
+     4. Estilos de la interfaz (no hace falta tocarlos para cambiar el aspecto)
+
+   Para cambiar el aspecto de toda la página alcanza con modificar los valores
+   de las secciones 1 y 2. Ningún color está escrito a mano más abajo.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. PERSONALIZACIÓN · TEMA CLARO (es el tema base)
+   ========================================================================== */
+
+:root {
+    color-scheme: light;
+
+    /* ---- Colores de marca ---------------------------------------------- */
+    --color-primario:   #2563eb;   /* Botones principales, deslizador y detalles clave */
+    --color-secundario: #0e7490;   /* Acentos: íconos de los paneles, línea del encabezado, lectura activa */
+
+    /* ---- Fondos y superficies ------------------------------------------ */
+    --color-fondo:        #f1f4f8; /* Fondo de la página */
+    --color-superficie:   #ffffff; /* Paneles */
+    --color-superficie-2: #f6f8fb; /* Cajas internas: lecturas, mensajes, tarjetas de LED */
+    --color-borde:        #dce3ec; /* Bordes y separadores */
+
+    /* ---- Texto ---------------------------------------------------------- */
+    --color-texto:        #1e293b; /* Texto principal */
+    --color-texto-suave:  #55657a; /* Descripciones y etiquetas */
+    --color-texto-boton:  #ffffff; /* Texto sobre los botones de color */
+
+    /* ---- Encabezado ----------------------------------------------------- */
+    --color-encabezado:           #17243a;
+    --color-encabezado-texto:     #ffffff;
+    --color-encabezado-subtexto:  #cbd5e1;
+
+    /* ---- Estados -------------------------------------------------------- */
+    --color-exito:        #15803d; /* Encender, micrófono activo, todo correcto */
+    --color-peligro:      #b91c1c; /* Apagar, detener */
+    --color-advertencia:  #b45309; /* Avisos (por ejemplo, falta el modelo de voz) */
+    --color-led:          #eab308; /* LED encendido */
+    --color-led-icono:    #3b2f00; /* Dibujo de la bombilla sobre el LED encendido */
+    --color-foco:         #f59e0b; /* Contorno al navegar con el teclado */
+
+    /* ---- Indicador del servo (dial con aguja) --------------------------
+       Por defecto toman los colores de arriba, así que acompañan a cualquier
+       tema. Cambiá estas dos líneas solo si querés un color propio. */
+    --color-servo-cuerpo: var(--color-primario);  /* Cuerpo del servo dibujado bajo el dial */
+    --color-aguja:        var(--color-texto);     /* Aguja: el cuerno del servo */
+
+    /* ---- Tipografía ------------------------------------------------------
+       Se usan fuentes del sistema a propósito: la Raspberry Pi trabaja sin
+       internet, así que no se descargan fuentes externas. */
+    --fuente-base:   system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --fuente-codigo: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+    /* ---- Formas y espacios --------------------------------------------- */
+    --radio-panel:  16px;          /* Paneles principales */
+    --radio-caja:   12px;          /* Cajas internas y tarjetas */
+    --radio-boton:  10px;          /* Botones */
+    --sombra-panel: 0 1px 2px rgb(15 23 42 / 0.05), 0 6px 20px rgb(15 23 42 / 0.05);
+    --ancho-maximo: 1200px;        /* Ancho máximo del contenido */
+}
+
+
+/* ==========================================================================
+   2. TEMA OSCURO (se activa con data-tema="oscuro" en la etiqueta <html>)
+
+   Para crear otro tema: copiá este bloque, cambiá "oscuro" por el nombre que
+   quieras y ajustá los valores. Los -texto y -suave que aparecen al final de
+   este bloque son versiones del color adaptadas al fondo del tema.
+   ========================================================================== */
+
+:root[data-tema="oscuro"] {
+    color-scheme: dark;
+
+    --color-primario:   #2f67e8;
+    --color-secundario: #22b8d6;
+
+    --color-fondo:        #0b1220;
+    --color-superficie:   #131c2e;
+    --color-superficie-2: #1a2539;
+    --color-borde:        #27354b;
+
+    --color-texto:        #e6edf7;
+    --color-texto-suave:  #9aa8bd;
+    --color-texto-boton:  #ffffff;
+
+    --color-encabezado:           #0d1626;
+    --color-encabezado-texto:     #f1f5f9;
+    --color-encabezado-subtexto:  #9fb0c7;
+
+    --color-exito:        #15803d;
+    --color-peligro:      #b91c1c;
+    --color-advertencia:  #d97706;
+    --color-led:          #facc15;
+    --color-led-icono:    #3b2f00;
+    --color-foco:         #fbbf24;
+
+    --sombra-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.25);
+
+    /* Versiones legibles sobre fondo oscuro */
+    --color-exito-texto:       #4ade80;
+    --color-advertencia-texto: #fbbf24;
+
+    /* Respaldo para navegadores antiguos (ver sección 3) */
+    --color-primario-suave:    #172a4f;
+    --color-secundario-suave:  #12303a;
+    --color-exito-suave:       #12301f;
+    --color-advertencia-suave: #36270f;
+    --color-led-suave:         #3a3210;
+    --color-led-brillo:        rgb(250 204 21 / 0.45);
+}
+
+
+/* ==========================================================================
+   3. VALORES DERIVADOS · No hace falta editarlos
+   Se calculan mezclando los colores base con la superficie del tema, de modo
+   que al cambiar --color-primario, --color-exito, etc., todo se ajusta solo.
+   ========================================================================== */
+
+:root {
+    /* Colores de texto para estados (en el tema claro coinciden con el base) */
+    --color-exito-texto:       var(--color-exito);
+    --color-advertencia-texto: var(--color-advertencia);
+
+    /* Respaldo fijo para navegadores sin color-mix() */
+    --color-primario-suave:    #e7eefc;
+    --color-secundario-suave:  #e0f2f6;
+    --color-exito-suave:       #e6f4ea;
+    --color-advertencia-suave: #fdf1de;
+    --color-led-suave:         #fdf6d8;
+    --color-led-brillo:        rgb(234 179 8 / 0.5);
+}
+
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+    :root,
+    :root[data-tema="oscuro"] {
+        --color-primario-suave:    color-mix(in srgb, var(--color-primario)    13%, var(--color-superficie));
+        --color-secundario-suave:  color-mix(in srgb, var(--color-secundario)  13%, var(--color-superficie));
+        --color-exito-suave:       color-mix(in srgb, var(--color-exito)       13%, var(--color-superficie));
+        --color-advertencia-suave: color-mix(in srgb, var(--color-advertencia) 13%, var(--color-superficie));
+        --color-led-suave:         color-mix(in srgb, var(--color-led)         16%, var(--color-superficie));
+        --color-led-brillo:        color-mix(in srgb, var(--color-led)         55%, transparent);
+    }
+}
+
+
+/* ==========================================================================
+   4. BASE
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f1f4f8;
-    color: #202938;
+    min-height: 100vh;
+    font-family: var(--fuente-base);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-texto);
+    background: var(--color-fondo);
+    -webkit-font-smoothing: antialiased;
 }
 
-.encabezado {
-    padding: 28px 20px;
-    text-align: center;
-    background: #17243a;
-    color: white;
-}
-
-.encabezado h1 {
-    margin: 0 0 8px;
-}
-
-.encabezado p {
+h1,
+h2 {
     margin: 0;
-    color: #cbd5e1;
+    line-height: 1.25;
 }
 
-.panel-principal {
-    width: min(1100px, 92%);
-    margin: 28px auto;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 20px;
+[hidden] {
+    display: none !important;
 }
 
-.panel {
-    padding: 24px;
-    background: white;
-    border: 1px solid #dce3ec;
-    border-radius: 14px;
-    min-width: 0;
-}
-
-.panel h2 {
-    margin-top: 0;
-    font-size: 21px;
+.icono {
+    flex: none;
+    width: 1.25em;
+    height: 1.25em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .texto-secundario {
-    color: #64748b;
-    font-size: 14px;
+    margin: 0;
+    color: var(--color-texto-suave);
+    font-size: 0.875rem;
     line-height: 1.5;
 }
 
+.etiqueta {
+    display: block;
+    color: var(--color-texto-suave);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+
+/* ==========================================================================
+   5. ENCABEZADO
+   ========================================================================== */
+
+.encabezado {
+    background: var(--color-encabezado);
+    color: var(--color-encabezado-texto);
+    border-bottom: 3px solid var(--color-secundario);
+}
+
+.encabezado-contenido {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: min(var(--ancho-maximo), 92%);
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+.marca-icono {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radio-caja);
+    background: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+
+.marca-icono .icono {
+    width: 26px;
+    height: 26px;
+}
+
+.encabezado-titulos {
+    flex: 1;
+    min-width: 0;
+}
+
+.encabezado h1 {
+    font-size: clamp(1.2rem, 1rem + 1vw, 1.6rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.encabezado p {
+    margin: 2px 0 0;
+    color: var(--color-encabezado-subtexto);
+    font-size: 0.9rem;
+}
+
+/* Botón de cambio de tema */
+.boton-tema {
+    flex: none;
+    width: 42px;
+    min-height: 42px;
+    padding: 0;
+    background: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+    color: var(--color-encabezado-texto);
+}
+
+.boton-tema:hover:not(:disabled) {
+    filter: none;
+    background: rgb(255 255 255 / 0.18);
+}
+
+.boton-tema .icono-sol {
+    display: none;
+}
+
+:root[data-tema="oscuro"] .boton-tema .icono-sol {
+    display: block;
+}
+
+:root[data-tema="oscuro"] .boton-tema .icono-luna {
+    display: none;
+}
+
+
+/* ==========================================================================
+   6. DISTRIBUCIÓN GENERAL
+   ========================================================================== */
+
+.panel-principal {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    width: min(var(--ancho-maximo), 92%);
+    margin: 28px auto 48px;
+}
+
+/* Voz y sensor ocupan todo el ancho; el servo, dos columnas junto a los LED */
+.panel-voz,
+.panel-distancia {
+    grid-column: 1 / -1;
+}
+
+.panel-servo {
+    grid-column: span 2;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+    padding: 24px;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-panel);
+    box-shadow: var(--sombra-panel);
+}
+
+.panel-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.panel-icono {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radio-caja);
+    background: var(--color-secundario-suave);
+    color: var(--color-secundario);
+}
+
+.panel h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+}
+
+.panel-descripcion {
+    margin: 2px 0 0;
+    color: var(--color-texto-suave);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+
+/* ==========================================================================
+   7. BOTONES Y FOCO
+   ========================================================================== */
+
 button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     min-height: 44px;
-    padding: 11px 15px;
+    padding: 10px 16px;
     border: 0;
-    border-radius: 8px;
-    background: #2563eb;
-    color: white;
-    font-size: 15px;
+    border-radius: var(--radio-boton);
+    background: var(--color-primario);
+    color: var(--color-texto-boton);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: filter 0.15s ease, transform 0.08s ease;
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(1px);
 }
 
 button:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
 button:focus-visible,
 input:focus-visible {
-    outline: 3px solid #f59e0b;
+    outline: 3px solid var(--color-foco);
     outline-offset: 3px;
+}
+
+/* Variantes de color. Las clases las activa voz.js según el estado. */
+#activar-microfono,
+.boton-encender {
+    background: var(--color-exito);
+}
+
+#apagar-microfono,
+.boton-apagar {
+    background: var(--color-peligro);
+}
+
+
+/* ==========================================================================
+   8. PANEL DE CONTROL POR VOZ
+   ========================================================================== */
+
+.voz-contenido {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+}
+
+.voz-control,
+.voz-salida {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* Indicador del micrófono: el punto cambia solo según los botones habilitados */
+.estado-microfono {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.estado-microfono::before {
+    content: "";
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin-top: 0.4em;
+    border-radius: 50%;
+    background: var(--color-texto-suave);
+}
+
+/* Micrófono encendido */
+.panel-voz:has(#apagar-microfono:not(:disabled)) .estado-microfono {
+    background: var(--color-exito-suave);
+    border-color: var(--color-exito);
+}
+
+.panel-voz:has(#apagar-microfono:not(:disabled)) .estado-microfono::before {
+    background: var(--color-exito);
+    animation: pulso-microfono 1.8s ease-out infinite;
+}
+
+/* Solicitando permiso (ambos botones bloqueados un instante) */
+.panel-voz:has(#activar-microfono:disabled):has(#apagar-microfono:disabled) .estado-microfono::before {
+    background: var(--color-advertencia);
+}
+
+@keyframes pulso-microfono {
+    0%   { box-shadow: 0 0 0 0 var(--color-exito); }
+    70%  { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .botones-microfono {
@@ -80,156 +478,737 @@ input:focus-visible {
     gap: 10px;
 }
 
-#activar-microfono {
-    background: #15803d;
+.botones-microfono button {
+    flex: 1 1 170px;
 }
 
-#apagar-microfono {
-    background: #b91c1c;
-}
-
-#resultado-voz,
-#estado-servo,
-#estado-sensor {
-    overflow-wrap: anywhere;
+/* Aviso del reconocimiento offline (voz.js agrega estado-correcto o estado-advertencia) */
+.aviso {
+    margin: 0;
+    padding: 10px 14px;
+    background: var(--color-superficie-2);
+    border-left: 4px solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    color: var(--color-texto-suave);
+    font-size: 0.875rem;
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
-.lista-leds {
+.aviso.estado-correcto {
+    background: var(--color-exito-suave);
+    border-left-color: var(--color-exito);
+    color: var(--color-exito-texto);
+}
+
+.aviso.estado-advertencia {
+    background: var(--color-advertencia-suave);
+    border-left-color: var(--color-advertencia);
+    color: var(--color-advertencia-texto);
+}
+
+/* Texto reconocido y resultado del comando */
+.bloque-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bloque-texto p {
+    min-height: 3.4rem;
+    margin: 0;
+    padding: 12px 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.bloque-resultado p {
+    border-left: 4px solid var(--color-primario);
+}
+
+.palabra-clave {
+    color: var(--color-secundario);
+    font-weight: 700;
+}
+
+
+/* ==========================================================================
+   8b. AYUDA DE COMANDOS
+   Un botón despliega un menú de cuatro categorías y cada una despliega su
+   lista. Las listas las genera Flask desde comandos_ayuda.py y ayuda.js
+   solo las muestra y oculta.
+   ========================================================================== */
+
+.voz-ayuda {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-borde);
+}
+
+.ayuda-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+}
+
+/* Botón principal: contorno cuando está cerrado, relleno cuando está abierto */
+.boton-ayuda {
+    background: var(--color-primario-suave);
+    color: var(--color-texto);
+    box-shadow: inset 0 0 0 1px var(--color-primario);
+}
+
+.boton-ayuda:hover:not(:disabled),
+.boton-ayuda[aria-expanded="true"] {
+    background: var(--color-primario);
+    color: var(--color-texto-boton);
+    filter: none;
+}
+
+.boton-ayuda[aria-expanded="true"]:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+.boton-ayuda .icono-flecha {
+    transition: transform 0.2s ease;
+}
+
+.boton-ayuda[aria-expanded="true"] .icono-flecha {
+    transform: rotate(180deg);
+}
+
+.menu-ayuda {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    animation: aparecer 0.2s ease-out;
+}
+
+.menu-ayuda-categorias {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
 }
 
-.tarjeta-led {
-    padding: 14px;
-    border: 1px solid #dce3ec;
-    border-radius: 10px;
+/* Cada categoría: blanca en reposo, resaltada mientras su lista está abierta */
+.boton-categoria {
+    background: var(--color-superficie);
+    color: var(--color-texto);
+    box-shadow: inset 0 0 0 1px var(--color-borde);
 }
 
-.fila-led {
+.boton-categoria .icono {
+    color: var(--color-secundario);
+}
+
+.boton-categoria:hover:not(:disabled) {
+    filter: none;
+    box-shadow: inset 0 0 0 1px var(--color-primario);
+}
+
+.boton-categoria[aria-expanded="true"] {
+    background: var(--color-primario-suave);
+    box-shadow: inset 0 0 0 2px var(--color-primario);
+}
+
+.lista-ayuda {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
-    margin-bottom: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-borde);
+    animation: aparecer 0.2s ease-out;
 }
 
-.indicador-led {
-    width: 13px;
-    height: 13px;
-    flex: 0 0 13px;
-    border-radius: 50%;
-    background: #94a3b8;
+.lista-ayuda h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
 }
 
-.indicador-led.encendido {
-    background: #eab308;
-    box-shadow: 0 0 8px #eab30880;
+.lista-comandos-detalle {
+    display: flex;
+    flex-direction: column;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
 }
 
-.estado-led {
-    font-size: 13px;
-    color: #64748b;
+.lista-comandos-detalle li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-borde);
 }
 
-.botones-led {
+.lista-comandos-detalle li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.comando-frases {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
-.botones-led button {
-    flex: 1;
-    padding: 9px;
-    font-size: 13px;
+.comando-frases code {
+    display: inline-block;
+    padding: 5px 11px;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    font-family: var(--fuente-codigo);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 
-.boton-apagar {
-    background: #64748b;
+.comando-detalle {
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+
+/* ==========================================================================
+   9. PANEL DE LEDs (las tarjetas las crea voz.js)
+   ========================================================================== */
+
+.lista-leds {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+}
+
+.tarjeta-led {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "titulo icono"
+        "estado icono"
+        "accion accion";
+    column-gap: 10px;
+    padding: 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    color: var(--color-texto);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* La tarjeta se resalta cuando su LED está encendido */
+.tarjeta-led:has(.indicador-led.encendido) {
+    background: var(--color-led-suave);
+    border-color: var(--color-led);
+}
+
+.fila-led {
+    display: contents;
+}
+
+.fila-led strong {
+    grid-area: titulo;
+    align-self: end;
+    font-size: 1rem;
+}
+
+.estado-led {
+    grid-area: estado;
+    align-self: start;
+    color: var(--color-texto-suave);
+    font-size: 0.85rem;
+}
+
+/* Bombilla: gris cuando está apagada, amarilla con brillo cuando está encendida */
+.indicador-led {
+    display: grid;
+    grid-area: icono;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--color-borde);
+    color: var(--color-texto-suave);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.indicador-led::before {
+    content: "";
+    width: 22px;
+    height: 22px;
+    background: currentColor;
+    -webkit-mask: var(--icono-bombilla) center / contain no-repeat;
+    mask: var(--icono-bombilla) center / contain no-repeat;
+}
+
+.indicador-led.encendido {
+    background: var(--color-led);
+    color: var(--color-led-icono);
+    box-shadow: 0 0 18px 2px var(--color-led-brillo);
+}
+
+.botones-led {
+    display: flex;
+    grid-area: accion;
+    margin-top: 12px;
+}
+
+.botones-led button {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+/* Encender o apagar todos los LED a la vez; quedan al pie del panel */
+.acciones-leds {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.acciones-leds button {
+    flex: 1;
+    min-height: 42px;
+    padding: 8px;
+    font-size: 0.88rem;
+}
+
+:root {
+    /* Dibujo de la bombilla (SVG en línea, funciona sin internet) */
+    --icono-bombilla: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E");
+}
+
+
+/* ==========================================================================
+   10. PANEL DEL SERVOMOTOR
+   ========================================================================== */
+
+.servo-contenido {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+}
+
+.servo-controles {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+/* --- Dial: semicírculo de 0° a 180° con el servo como aguja --- */
+.servo-indicador {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+}
+
+.dial-servo {
+    display: block;
+    width: 100%;
+    max-width: 440px;
+    height: auto;
+    font-family: var(--fuente-base);
+}
+
+.dial-plano {
+    fill: var(--color-superficie-2);
+    stroke: var(--color-borde);
+    stroke-width: 1.5;
+}
+
+/* Puntas planas: así el arco termina exactamente en el ángulo de la aguja */
+.dial-pista,
+.dial-progreso {
+    fill: none;
+    stroke-width: 14;
+    stroke-linecap: butt;
+}
+
+.dial-pista {
+    stroke: var(--color-borde);
+}
+
+/* El arco mide 180 unidades (una por grado); voz.js mueve el desfase */
+.dial-progreso {
+    stroke: var(--color-primario);
+    stroke-dasharray: 180;
+    transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+.dial-marcas line {
+    stroke: var(--color-texto-suave);
+    stroke-linecap: round;
+}
+
+.marca-menor {
+    stroke-width: 1.5;
+    opacity: 0.55;
+}
+
+.marca-mayor {
+    stroke-width: 2.5;
+}
+
+.dial-numeros text {
+    fill: var(--color-texto-suave);
+    font-size: 11px;
+    font-weight: 600;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Ilustración del servo: cuerpo fijo + cuerno que gira --- */
+.servo-cuerpo {
+    fill: var(--color-servo-cuerpo);
+}
+
+.servo-oreja,
+.servo-carcasa {
+    fill: var(--color-servo-cuerpo);
+    filter: brightness(0.78);
+}
+
+.servo-agujero {
+    fill: var(--color-superficie-2);
+}
+
+.servo-placa {
+    fill: rgb(0 0 0 / 0.22);
+}
+
+.servo-modelo {
+    fill: var(--color-texto-boton);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.servo-cable {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+
+.servo-cable-tierra    { stroke: var(--color-texto-suave); }
+.servo-cable-positivo  { stroke: var(--color-peligro); }
+.servo-cable-senal     { stroke: var(--color-advertencia); }
+
+/* Aguja: gira sobre el eje (160, 170) del dibujo */
+.servo-aguja {
+    transform-origin: 160px 170px;
+    transition: transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+.servo-cuerno {
+    fill: var(--color-aguja);
+    stroke: var(--color-aguja);
+    stroke-width: 6;
+    stroke-linejoin: round;
+}
+
+.servo-agujero-cuerno {
+    fill: var(--color-superficie);
+}
+
+.servo-tapa {
+    fill: var(--color-superficie);
+    stroke: var(--color-aguja);
+    stroke-width: 2;
+}
+
+.servo-tornillo {
+    fill: none;
+    stroke: var(--color-aguja);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.servo-lectura {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+}
+
+.servo-lectura strong {
+    color: var(--color-texto);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 
 .angulo {
     display: flex;
+    align-items: baseline;
     justify-content: space-between;
-    align-items: center;
     gap: 10px;
-    margin-bottom: 18px;
+    padding: 14px 16px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
 }
 
 #valor-angulo {
-    font-size: 28px;
+    color: var(--color-texto);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.control-deslizador {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 #control-servo {
+    -webkit-appearance: none;
+    appearance: none;
     display: block;
     width: 100%;
-    margin: 22px 0;
+    height: 28px;
+    margin: 0;
+    background: transparent;
     cursor: pointer;
+}
+
+#control-servo::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-borde);
+}
+
+#control-servo::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-borde);
+}
+
+#control-servo::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    margin-top: -8px;
+    border: 3px solid var(--color-superficie);
+    border-radius: 50%;
+    background: var(--color-primario);
+    box-shadow: 0 0 0 1px var(--color-primario), 0 2px 6px rgb(0 0 0 / 0.25);
+}
+
+#control-servo::-moz-range-thumb {
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--color-superficie);
+    border-radius: 50%;
+    background: var(--color-primario);
+    box-shadow: 0 0 0 1px var(--color-primario), 0 2px 6px rgb(0 0 0 / 0.25);
 }
 
 .extremos {
     display: flex;
     justify-content: space-between;
-    color: #64748b;
-    font-size: 13px;
-    margin-bottom: 18px;
+    color: var(--color-texto-suave);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
 }
 
-#enviar-servo {
+#estado-servo,
+#estado-sensor,
+#resultado-voz,
+#texto-vosk,
+#estado-reconocimiento {
+    overflow-wrap: anywhere;
+}
+
+#estado-servo,
+#estado-sensor {
+    margin: 0;
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#enviar-servo,
+#alternar-sensor {
     width: 100%;
+    margin-top: auto;   /* Mantiene el botón al pie del panel */
 }
 
-.panel-distancia {
-    text-align: center;
-}
+
+/* ==========================================================================
+   11. PANEL DEL SENSOR ULTRASÓNICO
+   ========================================================================== */
 
 .medicion {
-    margin: 24px 0 10px;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 16px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    transition: border-color 0.2s ease;
 }
 
 .medicion strong {
-    font-size: clamp(40px, 7vw, 64px);
+    font-size: clamp(2.75rem, 2rem + 2vw, 4rem);
     font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
 }
 
 .medicion span {
-    font-size: 22px;
-    color: #64748b;
+    color: var(--color-texto-suave);
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
-@media (max-width: 650px) {
+/* Con la medición activa, la lectura se resalta con el color secundario */
+.panel-distancia:has(#alternar-sensor.boton-apagar) .medicion {
+    border-color: var(--color-secundario);
+}
+
+.panel-distancia:has(#alternar-sensor.boton-apagar) .medicion strong {
+    color: var(--color-secundario);
+}
+
+.sensor-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.panel-distancia #estado-sensor {
+    text-align: center;
+}
+
+.panel-distancia .texto-secundario {
+    text-align: center;
+}
+
+
+/* ==========================================================================
+   12. ADAPTACIÓN A PANTALLAS CHICAS
+   ========================================================================== */
+
+/* Menú de ayuda: cuatro categorías en fila y cada comando junto a su explicación */
+@media (min-width: 700px) {
+    .menu-ayuda-categorias {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .lista-comandos-detalle li {
+        grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+        align-items: center;
+        column-gap: 24px;
+    }
+}
+
+/* Servo y sensor se reparten el panel en dos o tres zonas cuando hay lugar */
+@media (min-width: 780px) {
+    .servo-contenido {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        align-items: stretch;
+        column-gap: 28px;
+    }
+
+    .panel-distancia {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: center;
+        column-gap: 28px;
+    }
+
+    .panel-distancia #estado-sensor,
+    .panel-distancia .texto-secundario {
+        text-align: left;
+    }
+}
+
+@media (min-width: 860px) {
+    .voz-contenido {
+        grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+        column-gap: 28px;
+    }
+
+    .voz-ayuda {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Por debajo de este ancho, los paneles se apilan en una sola columna */
+@media (max-width: 1160px) {
     .panel-principal {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .panel-principal > .panel {
+        grid-column: auto;
+    }
+}
+
+@media (min-width: 700px) and (max-width: 1160px) {
+    .lista-leds {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .panel-principal {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        margin-top: 20px;
     }
 
     .panel {
         padding: 18px;
     }
-}
 
-@media (max-width: 360px) {
-    .lista-leds {
-        grid-template-columns: minmax(0, 1fr);
+    .encabezado-contenido {
+        padding: 16px 0;
     }
 }
-.estado-correcto {
-    color: #15803d;
-}
 
-.estado-advertencia {
-    color: #b45309;
-}
-
-#alternar-sensor {
-    width: 100%;
-}
-
-#alternar-sensor.boton-apagar {
-    background: #b91c1c;
-}
-
-#estado-reconocimiento {
-    overflow-wrap: anywhere;
-    line-height: 1.5;
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
 }
