@@ -106,7 +106,7 @@
                 <div class="voz-ayuda">
                     <div class="ayuda-cabecera">
                         <p class="texto-secundario">
-                            Todos los comandos empiezan con «comando». Decí «comando ayuda» para abrir la lista.
+                            Todos los comandos empiezan con {{ palabras_inicio_texto }}. Decí «{{ palabra_inicio }} ayuda» para abrir la lista.
                         </p>
 
                         <button
@@ -154,13 +154,24 @@
                                 <li>
                                     <span class="comando-frases">
                                         {% for frase in item.frases %}
-                                        <code><span class="palabra-clave">comando</span> {{ frase }}</code>
+                                        <code><span class="palabra-clave">{{ palabra_inicio }}</span> {{ frase }}</code>
                                         {% endfor %}
                                     </span>
                                     <span class="comando-detalle">{{ item.detalle }}</span>
                                 </li>
                                 {% endfor %}
                             </ul>
+
+                            {% if clave == "leds" %}
+                            <!-- Nombres actuales de los LED: los dibuja voz.js a partir de lo que
+                                 el usuario escribió en cada tarjeta, así que siempre están al día. -->
+                            <p class="texto-secundario ayuda-leds-titulo">Con los nombres que tienen ahora:</p>
+                            <ul
+                                id="ayuda-leds-actuales"
+                                class="lista-comandos-detalle"
+                                data-palabra="{{ palabra_inicio }}"
+                            ></ul>
+                            {% endif %}
                         </section>
                         {% endfor %}
                     </div>
@@ -177,11 +188,13 @@
                 </span>
                 <div>
                     <h2 id="titulo-leds">Iluminación</h2>
-                    <p class="panel-descripcion">Cada LED se controla de forma independiente.</p>
+                    <p class="panel-descripcion">Cada LED se controla de forma independiente. Con el lápiz le ponés un nombre, y ese nombre también se usa por voz.</p>
                 </div>
             </header>
 
-            <div id="lista-leds" class="lista-leds">
+            <!-- Las tarjetas las crea voz.js. data-palabra es la palabra de inicio principal,
+                 para escribir bajo cada LED cómo se lo nombra por voz. -->
+            <div id="lista-leds" class="lista-leds" data-palabra="{{ palabra_inicio }}">
                 Cargando LED...
             </div>
 
@@ -342,30 +355,163 @@
                 </div>
             </header>
 
-            <div class="medicion" aria-live="polite">
-                <strong id="distancia">--</strong>
-                <span>cm</span>
+            <div class="sensor-contenido">
+
+                <div class="sensor-lectura">
+                    <div class="medicion" aria-live="polite">
+                        <strong id="distancia">--</strong>
+                        <span>cm</span>
+                    </div>
+
+                    <div class="sensor-acciones">
+                        <p id="estado-sensor" aria-live="polite">
+                            Medición desactivada.
+                        </p>
+
+                        <p class="texto-secundario">
+                            Por voz: «{{ palabra_inicio }} activar sensor» o «{{ palabra_inicio }} desactivar sensor».
+                        </p>
+
+                        <button id="alternar-sensor" type="button">
+                            Activar medición
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gráfico de los últimos 60 segundos. Lo dibuja static/js/grafico.js
+                     con SVG propio (sin librerías, funciona sin internet). -->
+                <figure class="grafico-distancia" id="grafico-distancia">
+                    <div class="grafico-cabecera">
+                        <figcaption>Últimos 60 segundos</figcaption>
+                        <span class="grafico-estadisticas" id="grafico-estadisticas">Sin datos</span>
+                    </div>
+                    <div class="grafico-lienzo" id="grafico-lienzo">
+                        <svg id="grafico-svg" role="img" aria-label="Historial de distancia de los últimos 60 segundos"></svg>
+                        <p class="grafico-vacio" id="grafico-vacio">Activá el sensor para ver el historial de distancia.</p>
+                        <div class="grafico-globo" id="grafico-globo" hidden></div>
+                    </div>
+                </figure>
+
             </div>
+        </section>
 
-            <div class="sensor-acciones">
-                <p id="estado-sensor" aria-live="polite">
-                    Medición desactivada.
-                </p>
-
-                <p class="texto-secundario">
-                    Por voz: «comando activar sensor» o «comando desactivar sensor».
-                </p>
-
-                <button id="alternar-sensor" type="button">
-                    Activar medición
+        <!-- ============ AUTOMATIZACIONES ============ -->
+        <section class="panel panel-reglas" aria-labelledby="titulo-reglas">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </span>
+                <div class="panel-cabecera-texto">
+                    <h2 id="titulo-reglas">Automatizaciones</h2>
+                    <p class="panel-descripcion">Reglas que usan la distancia del sensor para controlar los LED y el servo.</p>
+                </div>
+                <button id="pausar-reglas" class="boton-secundario" type="button" aria-pressed="false">
+                    Pausar reglas
                 </button>
+            </header>
+
+            <form id="formulario-regla" class="formulario-regla" novalidate>
+                <div class="regla-fila">
+                    <span class="regla-palabra">Si la distancia es</span>
+
+                    <select id="regla-condicion" aria-label="Condición de la distancia">
+                        <option value="menor">menor a</option>
+                        <option value="mayor">mayor a</option>
+                    </select>
+
+                    <label class="regla-numero">
+                        <input id="regla-umbral" type="number" inputmode="decimal" min="2" max="400" step="1" value="20" aria-label="Distancia en centímetros">
+                        <span>cm</span>
+                    </label>
+                </div>
+
+                <div class="regla-fila">
+                    <span class="regla-palabra">entonces</span>
+
+                    <select id="regla-accion" aria-label="Acción a realizar">
+                        <option value="led-on">Encender LED</option>
+                        <option value="led-off">Apagar LED</option>
+                        <option value="leds-on">Encender todos los LED</option>
+                        <option value="leds-off">Apagar todos los LED</option>
+                        <option value="servo">Mover el servo a</option>
+                    </select>
+
+                    <select id="regla-led" aria-label="Número de LED"></select>
+
+                    <label id="regla-angulo-grupo" class="regla-numero" hidden>
+                        <input id="regla-angulo" type="number" inputmode="numeric" min="0" max="180" step="1" value="90" aria-label="Ángulo del servo en grados">
+                        <span>°</span>
+                    </label>
+
+                    <button id="agregar-regla" type="submit">
+                        <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        Agregar regla
+                    </button>
+                </div>
+            </form>
+
+            <p id="regla-mensaje" class="aviso aviso-regla" role="status" hidden></p>
+
+            <ul id="lista-reglas" class="lista-reglas"></ul>
+
+            <p id="reglas-vacio" class="reglas-vacio">
+                Todavía no hay reglas. Creá una acá o decí «{{ palabra_inicio }} si hay algo a menos de veinte centímetros encender led uno».
+            </p>
+
+            <p id="reglas-nota" class="aviso" hidden></p>
+        </section>
+
+        <!-- ============ REGISTRO DE COMANDOS ============ -->
+        <section class="panel panel-registro" aria-labelledby="titulo-registro">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                </span>
+                <div class="panel-cabecera-texto">
+                    <h2 id="titulo-registro">Registro de comandos</h2>
+                    <p class="panel-descripcion">Lo que escuchó Vosk y qué se hizo con cada orden.</p>
+                </div>
+            </header>
+
+            <div class="registro-herramientas">
+                <label class="registro-filtro">
+                    <span class="etiqueta">Mostrar</span>
+                    <select id="registro-filtro">
+                        <option value="todo">Todo</option>
+                        <option value="ordenes">Órdenes</option>
+                        <option value="errores">Errores</option>
+                        <option value="ignoradas">Ignoradas</option>
+                        <option value="reglas">Reglas</option>
+                    </select>
+                </label>
+                <button id="limpiar-registro" class="boton-secundario" type="button">Limpiar</button>
             </div>
+
+            <ol id="lista-registro" class="lista-registro"></ol>
+
+            <p id="registro-vacio" class="reglas-vacio">
+                Todavía no hay actividad. Activá el micrófono y dictá una orden: acá vas a ver lo que entendió Vosk.
+            </p>
+
+            <p id="registro-contador" class="registro-contador" role="status">0 eventos</p>
         </section>
 
     </main>
 
     <script
         src="{{ url_for('static', filename='js/ayuda.js') }}"
+        defer
+    ></script>
+    <script
+        src="{{ url_for('static', filename='js/grafico.js') }}"
+        defer
+    ></script>
+    <script
+        src="{{ url_for('static', filename='js/automatizaciones.js') }}"
+        defer
+    ></script>
+    <script
+        src="{{ url_for('static', filename='js/registro.js') }}"
         defer
     ></script>
     <script

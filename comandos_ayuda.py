@@ -2,7 +2,9 @@
 """Catálogo de comandos de voz que muestra el menú «Ayuda de comandos».
 
 Este archivo solo contiene texto: lo usa templates/index.html para dibujar las
-cuatro listas. Para sumar, quitar o corregir un comando en la ayuda alcanza con
+cuatro listas. (La lista «Con los nombres que tienen ahora», al final de los
+comandos de LED, no está acá: la dibuja static/js/voz.js con los nombres que
+cada persona le puso a sus LED.) Para sumar, quitar o corregir un comando en la ayuda alcanza con
 editar este diccionario; no hace falta tocar HTML ni JavaScript.
 
 La lógica que realmente interpreta cada frase está en app.py (ver la función
@@ -13,7 +15,8 @@ Formato:
     clave de la categoría -> titulo (texto del botón), encabezado (título de la
     lista), resumen y lista de comandos.
     Cada comando tiene "frases" (una o más formas de decirlo) y "detalle".
-    Las frases se escriben SIN la palabra inicial «comando»: la página la agrega.
+    Las frases se escriben SIN la palabra de inicio: la página agrega la principal de
+    PALABRAS_DE_INICIO (la lista configurable al comienzo de app.py).
 
 Las claves ("leds", "servo", "sensor", "generales") deben coincidir con las que
 devuelve app.py en el campo "ayuda" de la respuesta.
@@ -23,11 +26,26 @@ AYUDA_COMANDOS = {
     "leds": {
         "titulo": "LED",
         "encabezado": "Comandos de los LED",
-        "resumen": "Encienden y apagan las luces, una por una o todas juntas.",
+        "resumen": (
+            "Encienden y apagan las luces, una por una o todas juntas. "
+            "Cada LED se nombra con el nombre que le pongas en la página."
+        ),
         "comandos": [
             {
+                "frases": ["encender cocina", "apagar cocina"],
+                "detalle": (
+                    "Enciende o apaga un LED por su nombre. Los nombres se cambian en la página, "
+                    "con el lápiz de cada LED; «cocina» es solo un ejemplo. "
+                    "Abajo está la lista con los nombres actuales."
+                ),
+            },
+            {
                 "frases": ["LED uno encender", "LED dos apagar"],
-                "detalle": "Enciende o apaga un LED según su número: uno, dos, tres o cuatro.",
+                "detalle": (
+                    "Mientras un LED conserve su nombre original (LED 1, LED 2...), también se lo "
+                    "nombra por su número: uno, dos, tres o cuatro. Al ponerle un nombre propio, "
+                    "pasa a responder solo a ese nombre."
+                ),
             },
             {
                 "frases": ["encender todas las leds"],
@@ -61,7 +79,7 @@ AYUDA_COMANDOS = {
     "sensor": {
         "titulo": "Sensor",
         "encabezado": "Comandos del sensor",
-        "resumen": "Controlan el sensor ultrasónico de distancia.",
+        "resumen": "Controlan el sensor ultrasónico y las reglas automáticas que dependen de la distancia.",
         "comandos": [
             {
                 "frases": ["activar sensor"],
@@ -74,6 +92,39 @@ AYUDA_COMANDOS = {
             {
                 "frases": ["medir distancia"],
                 "detalle": "Informa la distancia actual. El sensor tiene que estar activado.",
+            },
+            {
+                "frases": ["si hay algo a menos de veinte centímetros encender led uno"],
+                "detalle": (
+                    "Crea una regla: cuando la distancia baje de 20 cm, enciende el LED 1 "
+                    "(o el LED con el nombre que le hayas puesto, por ejemplo «encender cocina»). "
+                    "También se puede apagar un LED, encender o apagar todas las leds, "
+                    "«giro a 90 grados» o «giro al centro»."
+                ),
+            },
+            {
+                "frases": ["si algo está a más de cien centímetros apagar todas las leds"],
+                "detalle": "Con «más de», la regla se dispara cuando la distancia supera ese valor. También se puede decir «metros».",
+            },
+            {
+                "frases": ["alarma a treinta centímetros encender todas las leds"],
+                "detalle": "Forma corta: «alarma» equivale a «si hay algo a menos de».",
+            },
+            {
+                "frases": ["reglas"],
+                "detalle": "Dice cuántas reglas hay y qué hace cada una.",
+            },
+            {
+                "frases": ["borrar regla uno", "borrar todas las reglas"],
+                "detalle": "Borra una regla por su número, o todas.",
+            },
+            {
+                "frases": ["desactivar regla uno", "activar regla uno"],
+                "detalle": "Apaga o enciende una regla sin borrarla.",
+            },
+            {
+                "frases": ["pausar reglas", "reanudar reglas"],
+                "detalle": "Detiene o reanuda todas las reglas. Solo se evalúan con el sensor activado.",
             },
         ],
     },
@@ -109,6 +160,10 @@ AYUDA_COMANDOS = {
             {
                 "frases": ["apagar todo"],
                 "detalle": "Apaga los LED y desactiva el sensor. El servo queda donde está.",
+            },
+            {
+                "frases": ["limpiar registro"],
+                "detalle": "Vacía el registro de comandos.",
             },
         ],
     },

@@ -107,11 +107,13 @@
     /* Versiones legibles sobre fondo oscuro */
     --color-exito-texto:       #4ade80;
     --color-advertencia-texto: #fbbf24;
+    --color-peligro-texto:     #f87171;
 
     /* Respaldo para navegadores antiguos (ver sección 3) */
     --color-primario-suave:    #172a4f;
     --color-secundario-suave:  #12303a;
     --color-exito-suave:       #12301f;
+    --color-peligro-suave:     #3a1717;
     --color-advertencia-suave: #36270f;
     --color-led-suave:         #3a3210;
     --color-led-brillo:        rgb(250 204 21 / 0.45);
@@ -128,11 +130,13 @@
     /* Colores de texto para estados (en el tema claro coinciden con el base) */
     --color-exito-texto:       var(--color-exito);
     --color-advertencia-texto: var(--color-advertencia);
+    --color-peligro-texto:     var(--color-peligro);
 
     /* Respaldo fijo para navegadores sin color-mix() */
     --color-primario-suave:    #e7eefc;
     --color-secundario-suave:  #e0f2f6;
     --color-exito-suave:       #e6f4ea;
+    --color-peligro-suave:     #fce8e8;
     --color-advertencia-suave: #fdf1de;
     --color-led-suave:         #fdf6d8;
     --color-led-brillo:        rgb(234 179 8 / 0.5);
@@ -144,6 +148,7 @@
         --color-primario-suave:    color-mix(in srgb, var(--color-primario)    13%, var(--color-superficie));
         --color-secundario-suave:  color-mix(in srgb, var(--color-secundario)  13%, var(--color-superficie));
         --color-exito-suave:       color-mix(in srgb, var(--color-exito)       13%, var(--color-superficie));
+        --color-peligro-suave:     color-mix(in srgb, var(--color-peligro)     13%, var(--color-superficie));
         --color-advertencia-suave: color-mix(in srgb, var(--color-advertencia) 13%, var(--color-superficie));
         --color-led-suave:         color-mix(in srgb, var(--color-led)         16%, var(--color-superficie));
         --color-led-brillo:        color-mix(in srgb, var(--color-led)         55%, transparent);
@@ -307,7 +312,8 @@ h2 {
     grid-column: 1 / -1;
 }
 
-.panel-servo {
+.panel-servo,
+.panel-reglas {
     grid-column: span 2;
 }
 
@@ -325,8 +331,20 @@ h2 {
 
 .panel-cabecera {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 10px 12px;
+}
+
+/* El texto del encabezado ocupa el espacio libre. Si un botón no entra a su lado
+   (pantallas angostas), pasa a la línea siguiente en lugar de aplastar el título. */
+.panel-cabecera > div {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.panel-cabecera > .boton-secundario {
+    margin-left: auto;
 }
 
 .panel-icono {
@@ -404,6 +422,76 @@ input:focus-visible {
 #apagar-microfono,
 .boton-apagar {
     background: var(--color-peligro);
+}
+
+
+/* ==========================================================================
+   7b. CAMPOS DE FORMULARIO Y BOTONES SECUNDARIOS
+   ========================================================================== */
+
+select,
+input[type="number"] {
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    color: var(--color-texto);
+    font: inherit;
+    font-size: 0.95rem;
+}
+
+select {
+    max-width: 100%;
+    cursor: pointer;
+}
+
+input[type="number"] {
+    width: 5.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+select:focus-visible {
+    outline: 3px solid var(--color-foco);
+    outline-offset: 3px;
+}
+
+/* Botón de contorno, para acciones que no son la principal del panel */
+.boton-secundario {
+    min-height: 40px;
+    padding: 8px 14px;
+    background: var(--color-superficie);
+    box-shadow: inset 0 0 0 1px var(--color-borde);
+    color: var(--color-texto);
+    font-size: 0.9rem;
+}
+
+.boton-secundario:hover:not(:disabled) {
+    filter: none;
+    box-shadow: inset 0 0 0 1px var(--color-primario);
+}
+
+.boton-secundario[aria-pressed="true"] {
+    background: var(--color-advertencia-suave);
+    box-shadow: inset 0 0 0 1px var(--color-advertencia);
+    color: var(--color-advertencia-texto);
+}
+
+/* Botón cuadrado con un ícono (por ejemplo, borrar) */
+.boton-icono {
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--color-borde);
+    color: var(--color-texto-suave);
+}
+
+.boton-icono:hover:not(:disabled) {
+    filter: none;
+    background: var(--color-peligro-suave);
+    box-shadow: inset 0 0 0 1px var(--color-peligro);
+    color: var(--color-peligro-texto);
 }
 
 
@@ -505,6 +593,12 @@ input:focus-visible {
     background: var(--color-advertencia-suave);
     border-left-color: var(--color-advertencia);
     color: var(--color-advertencia-texto);
+}
+
+.aviso.estado-error {
+    background: var(--color-peligro-suave);
+    border-left-color: var(--color-peligro);
+    color: var(--color-peligro-texto);
 }
 
 /* Texto reconocido y resultado del comando */
@@ -706,6 +800,8 @@ input:focus-visible {
     grid-template-areas:
         "titulo icono"
         "estado icono"
+        "edicion edicion"
+        "voz voz"
         "accion accion";
     column-gap: 10px;
     padding: 14px;
@@ -726,10 +822,111 @@ input:focus-visible {
     display: contents;
 }
 
-.fila-led strong {
+/* Nombre del LED + lápiz para cambiarlo */
+.led-titulo {
+    display: flex;
     grid-area: titulo;
+    align-items: center;
     align-self: end;
+    gap: 6px;
+    min-width: 0;
+}
+
+.led-titulo strong {
+    min-width: 0;
     font-size: 1rem;
+    overflow-wrap: anywhere;   /* un nombre largo baja de renglón en vez de desbordar */
+}
+
+.boton-renombrar {
+    flex: none;
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--color-borde);
+    color: var(--color-texto-suave);
+}
+
+.boton-renombrar .icono {
+    width: 16px;
+    height: 16px;
+}
+
+.boton-renombrar:hover:not(:disabled),
+.boton-renombrar[aria-expanded="true"] {
+    filter: none;
+    background: var(--color-primario-suave);
+    box-shadow: inset 0 0 0 1px var(--color-primario);
+    color: var(--color-primario);
+}
+
+/* Cómo se nombra este LED por voz */
+.voz-led {
+    grid-area: voz;
+    margin: 10px 0 0;
+    color: var(--color-texto-suave);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* Mientras se edita, la tarjeta ocupa toda la fila: en pantallas chicas las
+   tarjetas miden unos 140 px y no cabrían el campo y los dos botones. */
+.tarjeta-led[data-editando="true"] {
+    grid-column: 1 / -1;
+}
+
+/* Formulario para cambiar el nombre: ocupa todo el ancho de la tarjeta */
+.formulario-nombre-led {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-area: edicion;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-borde);
+}
+
+.formulario-nombre-led[hidden],
+.aviso-nombre[hidden] {
+    display: none;
+}
+
+.campo-nombre-led {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    color: var(--color-texto);
+    font: inherit;
+    font-size: 0.95rem;
+}
+
+.formulario-nombre-led .texto-secundario {
+    font-size: 0.8rem;
+}
+
+.acciones-nombre-led {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.acciones-nombre-led button {
+    flex: 1;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+/* Subtítulo de la lista de nombres actuales, dentro de la ayuda de LED */
+.ayuda-leds-titulo {
+    margin-top: 16px;
+    font-weight: 600;
 }
 
 .estado-led {
@@ -1106,6 +1303,19 @@ input:focus-visible {
     color: var(--color-secundario);
 }
 
+.sensor-contenido {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+}
+
+.sensor-lectura {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
 .sensor-acciones {
     display: flex;
     flex-direction: column;
@@ -1119,6 +1329,454 @@ input:focus-visible {
 
 .panel-distancia .texto-secundario {
     text-align: center;
+}
+
+
+/* ==========================================================================
+   11b. GRÁFICO DE DISTANCIA
+   Lo dibuja static/js/grafico.js con SVG. Las clases grafico-* usan solo las
+   variables de color del inicio de este archivo.
+   ========================================================================== */
+
+.grafico-distancia {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+}
+
+.grafico-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 16px;
+}
+
+.grafico-cabecera figcaption {
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.grafico-estadisticas {
+    color: var(--color-texto-suave);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.grafico-lienzo {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 220px;
+    overflow: hidden;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+}
+
+.grafico-lienzo svg {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: var(--fuente-base);
+    touch-action: pan-y;
+}
+
+.grafico-eje {
+    stroke: var(--color-borde);
+    stroke-width: 1.5;
+}
+
+.grafico-cuadricula {
+    stroke: var(--color-borde);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+}
+
+.grafico-texto {
+    fill: var(--color-texto-suave);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.grafico-linea {
+    fill: none;
+    stroke: var(--color-secundario);
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.grafico-area {
+    fill: var(--color-secundario-suave);
+    fill-opacity: 0.85;
+    stroke: none;
+}
+
+.grafico-punto {
+    fill: var(--color-secundario);
+    stroke: var(--color-superficie-2);
+    stroke-width: 2;
+}
+
+.grafico-punto-suelto {
+    fill: var(--color-secundario);
+}
+
+/* Con el sensor detenido, el último tramo queda atenuado */
+.grafico-lienzo[data-estado="detenido"] .grafico-linea,
+.grafico-lienzo[data-estado="detenido"] .grafico-area {
+    opacity: 0.55;
+}
+
+/* Umbral de cada regla: línea punteada con su nombre */
+.grafico-umbral {
+    stroke: var(--color-advertencia);
+    stroke-width: 1.5;
+    stroke-dasharray: 6 4;
+}
+
+.grafico-texto-umbral {
+    fill: var(--color-advertencia-texto);
+    font-size: 11px;
+    font-weight: 600;
+    paint-order: stroke;
+    stroke: var(--color-superficie-2);
+    stroke-width: 3px;
+}
+
+.grafico-umbral-apagado {
+    opacity: 0.35;
+}
+
+.grafico-guia {
+    stroke: var(--color-texto-suave);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.grafico-vacio {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 16px;
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+    text-align: center;
+    pointer-events: none;
+}
+
+.grafico-globo {
+    position: absolute;
+    z-index: 2;
+    padding: 4px 10px;
+    background: var(--color-texto);
+    border-radius: 8px;
+    color: var(--color-superficie);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+
+/* ==========================================================================
+   11c. AUTOMATIZACIONES
+   ========================================================================== */
+
+.formulario-regla {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+}
+
+.regla-palabra {
+    font-weight: 600;
+}
+
+/* Cada fila se lee como parte de una oración: «Si la distancia es…» / «entonces…» */
+.regla-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+}
+
+.regla-numero {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-texto-suave);
+    font-weight: 600;
+}
+
+.regla-fila button[type="submit"] {
+    margin-left: auto;
+}
+
+.lista-reglas {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lista-reglas:empty {
+    display: none;
+}
+
+.regla {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.regla-indicador {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-texto-suave);
+}
+
+.regla[data-situacion="espera"] .regla-indicador {
+    background: var(--color-secundario);
+}
+
+/* Regla cumplida ahora mismo: se resalta (el texto de abajo también lo dice) */
+.regla[data-situacion="cumplida"] {
+    background: var(--color-exito-suave);
+    border-color: var(--color-exito);
+}
+
+.regla[data-situacion="cumplida"] .regla-indicador {
+    background: var(--color-exito);
+    animation: pulso-microfono 1.8s ease-out infinite;
+}
+
+.regla[data-situacion="inactiva"],
+.regla[data-situacion="pausada"] {
+    opacity: 0.7;
+}
+
+.regla-descripcion {
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.regla-meta {
+    margin: 2px 0 0;
+    color: var(--color-texto-suave);
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.reglas-vacio {
+    margin: 0;
+    padding: 18px 16px;
+    border: 1px dashed var(--color-borde);
+    border-radius: var(--radio-caja);
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Interruptor para activar o desactivar una regla */
+.interruptor {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    width: 44px;
+    height: 26px;
+    cursor: pointer;
+}
+
+.interruptor input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.interruptor-pista {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-borde);
+    transition: background-color 0.2s ease;
+}
+
+.interruptor-pista::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-texto-boton);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+    transition: transform 0.2s ease;
+}
+
+.interruptor input:checked + .interruptor-pista {
+    background: var(--color-primario);
+}
+
+.interruptor input:checked + .interruptor-pista::after {
+    transform: translateX(18px);
+}
+
+.interruptor input:focus-visible {
+    outline: none;
+}
+
+.interruptor input:focus-visible + .interruptor-pista {
+    outline: 3px solid var(--color-foco);
+    outline-offset: 3px;
+}
+
+
+/* ==========================================================================
+   11d. REGISTRO DE COMANDOS
+   ========================================================================== */
+
+.registro-herramientas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 12px;
+}
+
+.registro-filtro {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.registro-filtro select {
+    min-height: 38px;
+    padding: 4px 10px;
+}
+
+.registro-contador {
+    margin: 0;
+    color: var(--color-texto-suave);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.lista-registro {
+    max-height: 400px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+}
+
+.lista-registro:empty {
+    display: none;
+}
+
+.registro-fila {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.registro-fila:last-child {
+    border-bottom: 0;
+}
+
+.registro-hora {
+    color: var(--color-texto-suave);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* La etiqueta dice el tipo con palabras: el color solo lo refuerza */
+.registro-etiqueta {
+    justify-self: start;
+    padding: 0 9px;
+    background: var(--color-exito-suave);
+    border-radius: 999px;
+    color: var(--color-exito-texto);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.7;
+}
+
+.registro-fila[data-estado="error"] .registro-etiqueta {
+    background: var(--color-peligro-suave);
+    color: var(--color-peligro-texto);
+}
+
+.registro-fila[data-estado="ignorado"] .registro-etiqueta {
+    background: var(--color-borde);
+    color: var(--color-texto-suave);
+}
+
+.registro-fila[data-origen="regla"][data-estado="ok"] .registro-etiqueta {
+    background: var(--color-secundario-suave);
+    color: var(--color-secundario);
+}
+
+.registro-detalle {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+.registro-texto {
+    margin: 0;
+    font-family: var(--fuente-codigo);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.registro-fila[data-estado="ignorado"] .registro-texto {
+    color: var(--color-texto-suave);
+}
+
+.registro-resultado {
+    margin: 2px 0 0;
+    color: var(--color-texto-suave);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
 }
 
 
@@ -1147,10 +1805,13 @@ input:focus-visible {
         column-gap: 28px;
     }
 
-    .panel-distancia {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: center;
+}
+
+/* Sensor: la lectura a la izquierda y el gráfico ocupando el resto */
+@media (min-width: 900px) {
+    .sensor-contenido {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
+        align-items: stretch;
         column-gap: 28px;
     }
 
@@ -1197,6 +1858,20 @@ input:focus-visible {
 
     .panel {
         padding: 18px;
+    }
+
+    .regla-fila button[type="submit"] {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .regla {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .regla .boton-icono {
+        grid-column: 3;
+        grid-row: 2;
     }
 
     .encabezado-contenido {

@@ -67,9 +67,9 @@ async function solicitar(url, opciones = {}) {
     return datos;
 }
 
-function enviarJSON(url, datos) {
+function enviarJSON(url, datos, metodo = "POST") {
     return solicitar(url, {
-        method: "POST",
+        method: metodo,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos),
     });
@@ -80,15 +80,59 @@ function enviarJSON(url, datos) {
 // LEDS DINAMICOS
 // ==========================================
 
+// Nombre y estado de cada LED según el servidor: {numero: {nombre, personalizado}}.
+// Llega en /api/estado y se renueva cada segundo, así que un cambio de nombre
+// hecho en otra pestaña (o en otro navegador) también aparece acá.
+let nombresLeds = {};
+let firmaNombres = "";
+let firmaAyudaLeds = "";
+
+const listaAyudaLeds = $("ayuda-leds-actuales");
+// Palabra de inicio principal («comando»): sale de PALABRAS_DE_INICIO en app.py.
+const PALABRA_INICIO = listaLeds.dataset.palabra || "comando";
+const LARGO_MAXIMO_NOMBRE = 24;
+
+const ICONO_LAPIZ =
+    '<svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+
+function infoLed(numero) {
+    return nombresLeds[numero] || { nombre: `LED ${numero}`, personalizado: false };
+}
+
+// Las tarjetas se buscan por su número (data-led), no por el texto del título:
+// el título ahora es el nombre que eligió la persona.
+function buscarTarjeta(numero) {
+    return listaLeds.querySelector(`.tarjeta-led[data-led="${Number(numero)}"]`);
+}
+
 function crearTarjetaLed(numero, encendido) {
     const tarjeta = document.createElement("article");
     tarjeta.className = "tarjeta-led";
+    tarjeta.dataset.led = String(numero);
 
     const fila = document.createElement("div");
     fila.className = "fila-led";
 
+    const bloqueTitulo = document.createElement("div");
+    bloqueTitulo.className = "led-titulo";
+
     const titulo = document.createElement("strong");
-    titulo.textContent = `LED ${numero}`;
+    titulo.className = "nombre-led";
+
+    const botonNombre = document.createElement("button");
+    botonNombre.type = "button";
+    botonNombre.className = "boton-renombrar";
+    botonNombre.innerHTML = ICONO_LAPIZ;
+    botonNombre.setAttribute("aria-expanded", "false");
+    botonNombre.addEventListener("click", () => {
+        if (tarjeta.dataset.editando === "true") {
+            cerrarEdicionNombre(tarjeta);
+        } else {
+            abrirEdicionNombre(tarjeta);
+        }
+    });
+
+    bloqueTitulo.append(titulo, botonNombre);
 
     const indicador = document.createElement("span");
     indicador.className = "indicador-led";
@@ -96,6 +140,10 @@ function crearTarjetaLed(numero, encendido) {
 
     const estado = document.createElement("span");
     estado.className = "estado-led";
+
+    // Cómo se nombra este LED por voz (se completa en aplicarNombreTarjeta).
+    const vozLed = document.createElement("p");
+    vozLed.className = "voz-led";
 
     const botones = document.createElement("div");
     botones.className = "botones-led";
@@ -106,9 +154,10 @@ function crearTarjetaLed(numero, encendido) {
     botonToggle.className = "boton-led-toggle";
     botonToggle.addEventListener("click", () => alternarLed(numero));
 
-    fila.append(titulo, indicador);
+    fila.append(bloqueTitulo, indicador);
     botones.append(botonToggle);
-    tarjeta.append(fila, estado, botones);
+    tarjeta.append(fila, estado, crearFormularioNombre(tarjeta, numero), vozLed, botones);
+    aplicarNombreTarjeta(tarjeta, infoLed(numero));
     actualizarTarjetaLed(tarjeta, encendido);
 
     return tarjeta;
@@ -118,8 +167,7 @@ function actualizarTarjetaLed(tarjeta, encendido) {
     const indicador = tarjeta.querySelector(".indicador-led");
     const estado = tarjeta.querySelector(".estado-led");
     const boton = tarjeta.querySelector(".boton-led-toggle");
-    const titulo = tarjeta.querySelector("strong").textContent;
-    const numero = titulo.replace("LED ", "");
+    const titulo = tarjeta.dataset.nombre || `LED ${tarjeta.dataset.led}`;
 
     indicador.classList.toggle("encendido", Boolean(encendido));
     estado.textContent = encendido ? "Encendido" : "Apagado";
@@ -134,13 +182,225 @@ function actualizarTarjetaLed(tarjeta, encendido) {
 }
 
 function actualizarLed(numero, encendido) {
-    const tarjetas = listaLeds.querySelectorAll(".tarjeta-led");
-    for (const tarjeta of tarjetas) {
-        if (tarjeta.querySelector("strong").textContent === `LED ${numero}`) {
-            actualizarTarjetaLed(tarjeta, encendido);
-            return;
-        }
+    const tarjeta = buscarTarjeta(numero);
+    if (tarjeta) {
+        actualizarTarjetaLed(tarjeta, encendido);
     }
+}
+
+
+// ==========================================
+// NOMBRES DE LOS LED (renombrar desde la página)
+// ==========================================
+
+// Muestra en la tarjeta el nombre vigente y cómo se dice por voz.
+function aplicarNombreTarjeta(tarjeta, info) {
+    const numero = tarjeta.dataset.led;
+    tarjeta.dataset.nombre = info.nombre;
+
+    const titulo = tarjeta.querySelector(".nombre-led");
+    if (titulo.textContent !== info.nombre) {
+        titulo.textContent = info.nombre;
+    }
+    titulo.title = info.personalizado ? `LED ${numero}` : "";
+
+    tarjeta
+        .querySelector(".boton-renombrar")
+        .setAttribute("aria-label", `Cambiar el nombre de ${info.nombre}`);
+    tarjeta.querySelector(".boton-renombrar").title = "Cambiar nombre";
+
+    const textoVoz = `Por voz: «${PALABRA_INICIO} encender ${info.nombre}»`;
+    const vozLed = tarjeta.querySelector(".voz-led");
+    if (vozLed.textContent !== textoVoz) {
+        vozLed.textContent = textoVoz;
+    }
+
+    // El botón de encender/apagar nombra al LED en su etiqueta de accesibilidad.
+    const encendido = tarjeta.querySelector(".indicador-led").classList.contains("encendido");
+    actualizarTarjetaLed(tarjeta, encendido);
+}
+
+// Guarda lo que informa el servidor y lo refleja en tarjetas y ayuda. Si nada
+// cambió no toca la página: esta función se ejecuta cada segundo.
+function aplicarNombres(nombres) {
+    if (!nombres || typeof nombres !== "object") {
+        return;
+    }
+
+    const nuevos = {};
+    for (const [clave, info] of Object.entries(nombres)) {
+        const numero = Number(clave);
+        if (!Number.isInteger(numero) || !info || typeof info.nombre !== "string") continue;
+        nuevos[numero] = { nombre: info.nombre, personalizado: Boolean(info.personalizado) };
+    }
+
+    const firma = JSON.stringify(nuevos);
+    if (firma === firmaNombres) {
+        return;
+    }
+    firmaNombres = firma;
+    nombresLeds = nuevos;
+
+    // Solo se cambia el título: si alguien está escribiendo un nombre en esta
+    // pestaña, su campo de texto no se toca aunque el nombre cambie en otra.
+    for (const tarjeta of listaLeds.querySelectorAll(".tarjeta-led")) {
+        aplicarNombreTarjeta(tarjeta, infoLed(Number(tarjeta.dataset.led)));
+    }
+    dibujarAyudaLeds();
+}
+
+function crearFormularioNombre(tarjeta, numero) {
+    const formulario = document.createElement("form");
+    formulario.className = "formulario-nombre-led";
+    formulario.hidden = true;
+    formulario.noValidate = true;
+
+    const idCampo = `nombre-led-${numero}`;
+
+    const etiqueta = document.createElement("label");
+    etiqueta.className = "etiqueta";
+    etiqueta.htmlFor = idCampo;
+    etiqueta.textContent = `Nombre del LED ${numero}`;
+
+    const campo = document.createElement("input");
+    campo.type = "text";
+    campo.id = idCampo;
+    campo.className = "campo-nombre-led";
+    campo.maxLength = LARGO_MAXIMO_NOMBRE;
+    campo.autocomplete = "off";
+    campo.spellcheck = false;
+    campo.placeholder = `LED ${numero}`;
+
+    const pista = document.createElement("p");
+    pista.className = "texto-secundario";
+    pista.textContent = `Dejalo vacío para volver a «LED ${numero}».`;
+
+    const error = document.createElement("p");
+    error.className = "aviso estado-error aviso-nombre";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+
+    const acciones = document.createElement("div");
+    acciones.className = "acciones-nombre-led";
+
+    const guardar = document.createElement("button");
+    guardar.type = "submit";
+    guardar.className = "boton-guardar-nombre";
+    guardar.textContent = "Guardar";
+
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.className = "boton-secundario";
+    cancelar.textContent = "Cancelar";
+    cancelar.addEventListener("click", () => cerrarEdicionNombre(tarjeta));
+
+    acciones.append(guardar, cancelar);
+    formulario.append(etiqueta, campo, pista, error, acciones);
+
+    formulario.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+        guardarNombre(tarjeta, numero, campo.value);
+    });
+    // Esc cancela y devuelve el foco al lápiz.
+    formulario.addEventListener("keydown", (evento) => {
+        if (evento.key === "Escape") {
+            evento.stopPropagation();
+            cerrarEdicionNombre(tarjeta);
+        }
+    });
+
+    return formulario;
+}
+
+function abrirEdicionNombre(tarjeta) {
+    const info = infoLed(Number(tarjeta.dataset.led));
+    const formulario = tarjeta.querySelector(".formulario-nombre-led");
+    const campo = formulario.querySelector(".campo-nombre-led");
+
+    tarjeta.dataset.editando = "true";
+    formulario.hidden = false;
+    formulario.querySelector(".aviso-nombre").hidden = true;
+    campo.value = info.personalizado ? info.nombre : "";
+    tarjeta.querySelector(".boton-renombrar").setAttribute("aria-expanded", "true");
+    campo.focus();
+    campo.select();
+}
+
+function cerrarEdicionNombre(tarjeta, devolverFoco = true) {
+    delete tarjeta.dataset.editando;
+    tarjeta.querySelector(".formulario-nombre-led").hidden = true;
+    const lapiz = tarjeta.querySelector(".boton-renombrar");
+    lapiz.setAttribute("aria-expanded", "false");
+    if (devolverFoco) {
+        lapiz.focus();
+    }
+}
+
+async function guardarNombre(tarjeta, numero, texto) {
+    const formulario = tarjeta.querySelector(".formulario-nombre-led");
+    const campo = formulario.querySelector(".campo-nombre-led");
+    const error = formulario.querySelector(".aviso-nombre");
+    const botonGuardar = formulario.querySelector(".boton-guardar-nombre");
+
+    botonGuardar.disabled = true;
+    error.hidden = true;
+    try {
+        const datos = await enviarJSON(`/api/led/${numero}/nombre`, { nombre: texto }, "PUT");
+        aplicarNombres(datos.nombres);
+        resultadoVoz.textContent = datos.mensaje;
+        cerrarEdicionNombre(tarjeta);
+        // El formulario de reglas y sus descripciones usan el nombre nuevo.
+        window.automatizaciones?.refrescar();
+    } catch (fallo) {
+        error.textContent = fallo.message || "No se pudo cambiar el nombre.";
+        error.hidden = false;
+        campo.focus();
+    } finally {
+        botonGuardar.disabled = false;
+    }
+}
+
+// Lista de la ayuda con una orden de encender y otra de apagar por cada LED,
+// con el nombre que tiene en este momento.
+function dibujarAyudaLeds() {
+    if (!listaAyudaLeds) {
+        return;
+    }
+
+    const numeros = Object.keys(nombresLeds).map(Number).sort((a, b) => a - b);
+    const firma = JSON.stringify(numeros.map((numero) => nombresLeds[numero]));
+    if (firma === firmaAyudaLeds) {
+        return;
+    }
+    firmaAyudaLeds = firma;
+
+    const palabra = listaAyudaLeds.dataset.palabra || PALABRA_INICIO;
+    listaAyudaLeds.replaceChildren(
+        ...numeros.map((numero) => {
+            const info = nombresLeds[numero];
+
+            const item = document.createElement("li");
+            const frases = document.createElement("span");
+            frases.className = "comando-frases";
+            for (const accion of ["encender", "apagar"]) {
+                const codigo = document.createElement("code");
+                const clave = document.createElement("span");
+                clave.className = "palabra-clave";
+                clave.textContent = palabra;
+                codigo.append(clave, ` ${accion} ${info.nombre}`);
+                frases.append(codigo);
+            }
+
+            const detalle = document.createElement("span");
+            detalle.className = "comando-detalle";
+            detalle.textContent = info.personalizado
+                ? `Enciende o apaga «${info.nombre}» (el LED ${numero}).`
+                : `El LED ${numero} conserva su nombre original. Podés cambiarlo con el lápiz de su tarjeta.`;
+
+            item.append(frases, detalle);
+            return item;
+        })
+    );
 }
 
 async function alternarLed(numero) {
@@ -186,19 +446,19 @@ function aplicarEstadoDispositivos(datos, crearTarjetas = false) {
         return;
     }
 
+    // Primero los nombres: así las tarjetas nuevas ya nacen con el nombre correcto.
+    if (datos.nombres) {
+        aplicarNombres(datos.nombres);
+    }
+
     if (datos.leds && typeof datos.leds === "object") {
         for (const [numeroTexto, encendido] of Object.entries(datos.leds)) {
             const numero = Number(numeroTexto);
             if (!Number.isInteger(numero)) continue;
 
-            let tarjeta = [...listaLeds.querySelectorAll(".tarjeta-led")].find(
-                (elemento) => elemento.querySelector("strong")?.textContent === `LED ${numero}`
-            );
+            let tarjeta = buscarTarjeta(numero);
 
-            if (!tarjeta && crearTarjetas) {
-                tarjeta = crearTarjetaLed(numero, Boolean(encendido));
-                listaLeds.appendChild(tarjeta);
-            } else if (!tarjeta) {
+            if (!tarjeta) {
                 // Si se añadió un LED en la configuración, también aparece
                 // en las pestañas que ya estaban abiertas.
                 tarjeta = crearTarjetaLed(numero, Boolean(encendido));
@@ -698,6 +958,12 @@ async function procesarComando(texto) {
                 // Se conserva el último estado visible.
             }
         }
+    } finally {
+        // Cada orden queda anotada en el registro del servidor y puede haber
+        // creado, borrado o pausado reglas: se actualizan esos paneles ya, sin
+        // esperar al ciclo de un segundo.
+        window.registroComandos?.refrescar();
+        window.automatizaciones?.refrescar();
     }
 }
 
