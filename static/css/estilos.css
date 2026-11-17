@@ -1,3 +1,16 @@
+/* ┌─────────────────────────────────────────────────────────────────────────┐ */
+/* │ static/css/estilos.css: EL ASPECTO DE TODA LA PÁGINA                    │ */
+/* │ QUIÉN LO USA: templates/index.html lo carga con <link>. Los scripts de  │ */
+/* │ static/js (voz.js, automatizaciones.js, grafico.js, registro.js,        │ */
+/* │ ayuda.js, tema.js) no tienen estilos propios: crean elementos con las   │ */
+/* │ clases de este archivo o cambian atributos que acá tienen efecto        │ */
+/* │ (data-tema, data-led, data-estado, hidden, aria-expanded...).           │ */
+/* │ CÓMO LEER LOS SELECTORES: «.clase» = elementos con esa clase;           │ */
+/* │ «#id» = el elemento con ese id; «a b» = b dentro de a; «a > b» = b hijo │ */
+/* │ directo; «:hover» = con el mouse encima; «:disabled» = deshabilitado;   │ */
+/* │ «::before» = un adorno creado por CSS antes del contenido.              │ */
+/* │ Los comentarios de cada regla explican qué estiliza y de dónde sale.    │ */
+/* └─────────────────────────────────────────────────────────────────────────┘ */
 /* ==========================================================================
    ESTILOS · Control de dispositivos con Raspberry Pi
 
@@ -160,12 +173,14 @@
    4. BASE
    ========================================================================== */
 
+/* Reinicio base: el ancho y alto de cada elemento incluyen su relleno y su borde (así los tamaños son más fáciles de calcular). */
 *,
 *::before,
 *::after {
     box-sizing: border-box;
 }
 
+/* Estilo base de toda la página: tipografía del sistema, color de texto y fondo (variables de las secciones 1 a 3). */
 body {
     margin: 0;
     min-height: 100vh;
@@ -177,16 +192,19 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Los títulos grandes (h1, h2) no llevan margen propio; el espaciado lo da cada panel. */
 h1,
 h2 {
     margin: 0;
     line-height: 1.25;
 }
 
+/* Todo elemento con el atributo «hidden» se oculta SIEMPRE. Los scripts lo usan para mostrar u ocultar partes (ayuda, formulario de nombre, avisos, globo del gráfico). */
 [hidden] {
     display: none !important;
 }
 
+/* Iconos SVG (index.html y voz.js): tamaño fijo, solo contorno y heredan el color del texto que los rodea. */
 .icono {
     flex: none;
     width: 1.25em;
@@ -198,6 +216,7 @@ h2 {
     stroke-linejoin: round;
 }
 
+/* Texto de apoyo: más chico y con color suave. */
 .texto-secundario {
     margin: 0;
     color: var(--color-texto-suave);
@@ -205,6 +224,7 @@ h2 {
     line-height: 1.5;
 }
 
+/* Rótulos pequeños sobre campos y bloques de texto. */
 .etiqueta {
     display: block;
     color: var(--color-texto-suave);
@@ -217,12 +237,14 @@ h2 {
    5. ENCABEZADO
    ========================================================================== */
 
+/* Barra superior de la página (index.html: <header class="encabezado">). */
 .encabezado {
     background: var(--color-encabezado);
     color: var(--color-encabezado-texto);
     border-bottom: 3px solid var(--color-secundario);
 }
 
+/* Contenido del encabezado: logo, títulos y botón de tema en una fila, centrado y con ancho máximo. */
 .encabezado-contenido {
     display: flex;
     align-items: center;
@@ -232,6 +254,7 @@ h2 {
     padding: 20px 0;
 }
 
+/* Cuadro del logo del encabezado. */
 .marca-icono {
     display: grid;
     flex: none;
@@ -243,22 +266,26 @@ h2 {
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
 }
 
+/* Tamaño del dibujo dentro del logo. */
 .marca-icono .icono {
     width: 26px;
     height: 26px;
 }
 
+/* Bloque con el título y el subtítulo: toma el espacio sobrante para empujar el botón de tema hacia la derecha. */
 .encabezado-titulos {
     flex: 1;
     min-width: 0;
 }
 
+/* Título principal de la página. */
 .encabezado h1 {
     font-size: clamp(1.2rem, 1rem + 1vw, 1.6rem);
     font-weight: 700;
     letter-spacing: -0.01em;
 }
 
+/* Subtítulo del encabezado. */
 .encabezado p {
     margin: 2px 0 0;
     color: var(--color-encabezado-subtexto);
@@ -266,6 +293,7 @@ h2 {
 }
 
 /* Botón de cambio de tema */
+/* Botón redondo para cambiar de tema (id alternar-tema; lo controla tema.js). */
 .boton-tema {
     flex: none;
     width: 42px;
@@ -276,19 +304,23 @@ h2 {
     color: var(--color-encabezado-texto);
 }
 
+/* Aspecto del botón de tema al pasar el mouse. */
 .boton-tema:hover:not(:disabled) {
     filter: none;
     background: rgb(255 255 255 / 0.18);
 }
 
+/* Con el tema claro se oculta el icono del sol (se ve la luna: el botón propone pasar a oscuro). */
 .boton-tema .icono-sol {
     display: none;
 }
 
+/* Con el tema oscuro (data-tema="oscuro", lo escribe tema.js en <html>) se muestra el sol... */
 :root[data-tema="oscuro"] .boton-tema .icono-sol {
     display: block;
 }
 
+/* ...y se oculta la luna. */
 :root[data-tema="oscuro"] .boton-tema .icono-luna {
     display: none;
 }
@@ -298,6 +330,7 @@ h2 {
    6. DISTRIBUCIÓN GENERAL
    ========================================================================== */
 
+/* Contenedor de los paneles: cuadrícula de 3 columnas con separación de 20 px, centrada y con ancho máximo. En pantallas más chicas pasa a una columna (ver sección 12 al final). */
 .panel-principal {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -307,16 +340,19 @@ h2 {
 }
 
 /* Voz y sensor ocupan todo el ancho; el servo, dos columnas junto a los LED */
+/* Voz y sensor ocupan toda la fila (de la primera a la última columna). */
 .panel-voz,
 .panel-distancia {
     grid-column: 1 / -1;
 }
 
+/* Servo y automatizaciones ocupan 2 de las 3 columnas (junto a Iluminación, que usa la restante). */
 .panel-servo,
 .panel-reglas {
     grid-column: span 2;
 }
 
+/* Tarjeta de cada panel: fondo de superficie, borde, esquinas redondeadas y sombra; apila su contenido en vertical. */
 .panel {
     display: flex;
     flex-direction: column;
@@ -329,6 +365,7 @@ h2 {
     box-shadow: var(--sombra-panel);
 }
 
+/* Cabecera de cada panel: icono + título + descripción (y a veces un botón a la derecha). */
 .panel-cabecera {
     display: flex;
     flex-wrap: wrap;
@@ -338,15 +375,18 @@ h2 {
 
 /* El texto del encabezado ocupa el espacio libre. Si un botón no entra a su lado
    (pantallas angostas), pasa a la línea siguiente en lugar de aplastar el título. */
+/* El bloque de textos de la cabecera toma el espacio disponible. */
 .panel-cabecera > div {
     flex: 1 1 12rem;
     min-width: 0;
 }
 
+/* Un botón dentro de la cabecera (por ejemplo «Pausar reglas») se alinea a la derecha. */
 .panel-cabecera > .boton-secundario {
     margin-left: auto;
 }
 
+/* Cuadrito con el icono de cada panel. */
 .panel-icono {
     display: grid;
     flex: none;
@@ -358,12 +398,14 @@ h2 {
     color: var(--color-secundario);
 }
 
+/* Título de cada panel (h2). */
 .panel h2 {
     font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: -0.005em;
 }
 
+/* Descripción corta debajo del título de un panel. */
 .panel-descripcion {
     margin: 2px 0 0;
     color: var(--color-texto-suave);
@@ -376,6 +418,7 @@ h2 {
    7. BOTONES Y FOCO
    ========================================================================== */
 
+/* ESTILO BASE DE TODOS LOS BOTONES: icono y texto centrados, altura mínima cómoda para tocar, relleno y esquinas redondeadas. */
 button {
     display: inline-flex;
     align-items: center;
@@ -394,19 +437,23 @@ button {
     transition: filter 0.15s ease, transform 0.08s ease;
 }
 
+/* Al pasar el mouse, el botón cambia levemente de brillo (filter). */
 button:hover:not(:disabled) {
     filter: brightness(1.1);
 }
 
+/* Al presionar, el botón se mueve apenas (efecto de pulsación). */
 button:active:not(:disabled) {
     transform: translateY(1px);
 }
 
+/* Botón deshabilitado: se ve apagado y sin cursor de mano. */
 button:disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }
 
+/* Contorno visible al navegar con el teclado (Tab). Es importante para la accesibilidad. */
 button:focus-visible,
 input:focus-visible {
     outline: 3px solid var(--color-foco);
@@ -414,11 +461,13 @@ input:focus-visible {
 }
 
 /* Variantes de color. Las clases las activa voz.js según el estado. */
+/* Botones «verdes» de acción positiva: activar micrófono y encender (tarjetas de LED, «Encender todos»). */
 #activar-microfono,
 .boton-encender {
     background: var(--color-exito);
 }
 
+/* Botones «rojos»: apagar micrófono y apagar (LED, sensor). */
 #apagar-microfono,
 .boton-apagar {
     background: var(--color-peligro);
@@ -429,6 +478,7 @@ input:focus-visible {
    7b. CAMPOS DE FORMULARIO Y BOTONES SECUNDARIOS
    ========================================================================== */
 
+/* Aspecto común de los menús desplegables y de los campos numéricos. */
 select,
 input[type="number"] {
     min-height: 40px;
@@ -441,22 +491,26 @@ input[type="number"] {
     font-size: 0.95rem;
 }
 
+/* Ajustes propios de los menús desplegables (ancho máximo y cursor). */
 select {
     max-width: 100%;
     cursor: pointer;
 }
 
+/* Ajustes propios de los campos numéricos (ancho fijo y cifras de igual ancho). */
 input[type="number"] {
     width: 5.25rem;
     font-variant-numeric: tabular-nums;
 }
 
+/* Contorno de foco en menús al usar el teclado. */
 select:focus-visible {
     outline: 3px solid var(--color-foco);
     outline-offset: 3px;
 }
 
 /* Botón de contorno, para acciones que no son la principal del panel */
+/* Botón de segundo plano (con borde en lugar de relleno): Cancelar, Pausar reglas, Limpiar. */
 .boton-secundario {
     min-height: 40px;
     padding: 8px 14px;
@@ -466,11 +520,13 @@ select:focus-visible {
     font-size: 0.9rem;
 }
 
+/* Aspecto al pasar el mouse. */
 .boton-secundario:hover:not(:disabled) {
     filter: none;
     box-shadow: inset 0 0 0 1px var(--color-primario);
 }
 
+/* Estado «presionado» (aria-pressed="true"), por ejemplo, cuando las reglas están en pausa. */
 .boton-secundario[aria-pressed="true"] {
     background: var(--color-advertencia-suave);
     box-shadow: inset 0 0 0 1px var(--color-advertencia);
@@ -478,6 +534,7 @@ select:focus-visible {
 }
 
 /* Botón cuadrado con un ícono (por ejemplo, borrar) */
+/* Botón cuadrado que solo lleva un icono (la papelera de cada regla, creada por automatizaciones.js). */
 .boton-icono {
     width: 40px;
     min-height: 40px;
@@ -487,6 +544,7 @@ select:focus-visible {
     color: var(--color-texto-suave);
 }
 
+/* Aspecto del botón de icono al pasar el mouse. */
 .boton-icono:hover:not(:disabled) {
     filter: none;
     background: var(--color-peligro-suave);
@@ -499,12 +557,14 @@ select:focus-visible {
    8. PANEL DE CONTROL POR VOZ
    ========================================================================== */
 
+/* Panel de voz: contenido en una columna (en pantallas anchas pasa a dos columnas, ver sección 12). */
 .voz-contenido {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
 }
 
+/* Cada columna del panel de voz apila sus elementos en vertical. */
 .voz-control,
 .voz-salida {
     display: flex;
@@ -514,6 +574,7 @@ select:focus-visible {
 }
 
 /* Indicador del micrófono: el punto cambia solo según los botones habilitados */
+/* Caja de estado del micrófono (index.html: #estado-microfono) con un punto indicador a la izquierda. */
 .estado-microfono {
     display: flex;
     align-items: flex-start;
@@ -528,6 +589,7 @@ select:focus-visible {
     line-height: 1.4;
 }
 
+/* El punto indicador: un círculo de color creado por CSS. */
 .estado-microfono::before {
     content: "";
     flex: none;
@@ -539,38 +601,45 @@ select:focus-visible {
 }
 
 /* Micrófono encendido */
+/* Micrófono ENCENDIDO (el botón «Apagar micrófono» está habilitado): la caja toma color de éxito... */
 .panel-voz:has(#apagar-microfono:not(:disabled)) .estado-microfono {
     background: var(--color-exito-suave);
     border-color: var(--color-exito);
 }
 
+/* ...y el punto se vuelve verde y pulsa (animación pulso-microfono). */
 .panel-voz:has(#apagar-microfono:not(:disabled)) .estado-microfono::before {
     background: var(--color-exito);
     animation: pulso-microfono 1.8s ease-out infinite;
 }
 
 /* Solicitando permiso (ambos botones bloqueados un instante) */
+/* Micrófono INICIÁNDOSE (los dos botones están deshabilitados a la vez): el punto cambia de color. */
 .panel-voz:has(#activar-microfono:disabled):has(#apagar-microfono:disabled) .estado-microfono::before {
     background: var(--color-advertencia);
 }
 
+/* Animación del punto del micrófono: crece y se desvanece en ciclo. */
 @keyframes pulso-microfono {
     0%   { box-shadow: 0 0 0 0 var(--color-exito); }
     70%  { box-shadow: 0 0 0 8px transparent; }
     100% { box-shadow: 0 0 0 0 transparent; }
 }
 
+/* Fila con los botones Activar / Apagar micrófono. */
 .botones-microfono {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
+/* Cada botón del micrófono ocupa el mismo ancho. */
 .botones-microfono button {
     flex: 1 1 170px;
 }
 
 /* Aviso del reconocimiento offline (voz.js agrega estado-correcto o estado-advertencia) */
+/* Cuadro de aviso con una barra de color a la izquierda. El color lo define una clase de estado (las tres reglas siguientes). */
 .aviso {
     margin: 0;
     padding: 10px 14px;
@@ -583,18 +652,21 @@ select:focus-visible {
     overflow-wrap: anywhere;
 }
 
+/* Aviso correcto (verde): por ejemplo, Vosk disponible. voz.js agrega la clase estado-correcto. */
 .aviso.estado-correcto {
     background: var(--color-exito-suave);
     border-left-color: var(--color-exito);
     color: var(--color-exito-texto);
 }
 
+/* Aviso de advertencia (naranja): por ejemplo, falta el modelo de voz o las reglas no actúan. */
 .aviso.estado-advertencia {
     background: var(--color-advertencia-suave);
     border-left-color: var(--color-advertencia);
     color: var(--color-advertencia-texto);
 }
 
+/* Aviso de error (rojo): por ejemplo, un nombre de LED rechazado. */
 .aviso.estado-error {
     background: var(--color-peligro-suave);
     border-left-color: var(--color-peligro);
@@ -602,12 +674,14 @@ select:focus-visible {
 }
 
 /* Texto reconocido y resultado del comando */
+/* Bloque de texto con rótulo (texto de Vosk y resultado del comando). */
 .bloque-texto {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
+/* Caja donde se muestra el texto (#texto-vosk y #resultado-voz). */
 .bloque-texto p {
     min-height: 3.4rem;
     margin: 0;
@@ -619,10 +693,12 @@ select:focus-visible {
     overflow-wrap: anywhere;
 }
 
+/* El resultado del comando lleva una barra de acento a la izquierda. */
 .bloque-resultado p {
     border-left: 4px solid var(--color-primario);
 }
 
+/* La palabra de inicio («comando») resaltada en los ejemplos de la ayuda. */
 .palabra-clave {
     color: var(--color-secundario);
     font-weight: 700;
@@ -636,6 +712,7 @@ select:focus-visible {
    solo las muestra y oculta.
    ========================================================================== */
 
+/* Zona de la ayuda de comandos dentro del panel de voz (separada por una línea). */
 .voz-ayuda {
     display: flex;
     flex-direction: column;
@@ -644,6 +721,7 @@ select:focus-visible {
     border-top: 1px solid var(--color-borde);
 }
 
+/* Fila con el texto de las palabras de inicio y el botón «Ayuda de comandos». */
 .ayuda-cabecera {
     display: flex;
     flex-wrap: wrap;
@@ -653,12 +731,14 @@ select:focus-visible {
 }
 
 /* Botón principal: contorno cuando está cerrado, relleno cuando está abierto */
+/* Botón «Ayuda de comandos» (index.html; lo controla ayuda.js). */
 .boton-ayuda {
     background: var(--color-primario-suave);
     color: var(--color-texto);
     box-shadow: inset 0 0 0 1px var(--color-primario);
 }
 
+/* Aspecto del botón de ayuda al pasar el mouse o cuando el menú está abierto (aria-expanded="true"). */
 .boton-ayuda:hover:not(:disabled),
 .boton-ayuda[aria-expanded="true"] {
     background: var(--color-primario);
@@ -666,18 +746,22 @@ select:focus-visible {
     filter: none;
 }
 
+/* Con el menú abierto, el hover no cambia más el brillo. */
 .boton-ayuda[aria-expanded="true"]:hover:not(:disabled) {
     filter: brightness(1.1);
 }
 
+/* La flecha del botón de ayuda gira con una transición suave... */
 .boton-ayuda .icono-flecha {
     transition: transform 0.2s ease;
 }
 
+/* ...hacia arriba cuando el menú está abierto. */
 .boton-ayuda[aria-expanded="true"] .icono-flecha {
     transform: rotate(180deg);
 }
 
+/* Caja del menú desplegable de ayuda (#menu-ayuda). */
 .menu-ayuda {
     display: flex;
     flex-direction: column;
@@ -689,6 +773,7 @@ select:focus-visible {
     animation: aparecer 0.2s ease-out;
 }
 
+/* Botones de categoría (LED, Servo, Sensor, Generales): 2 columnas en pantallas chicas, 4 en anchas. */
 .menu-ayuda-categorias {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -696,26 +781,31 @@ select:focus-visible {
 }
 
 /* Cada categoría: blanca en reposo, resaltada mientras su lista está abierta */
+/* Botón de una categoría de la ayuda. */
 .boton-categoria {
     background: var(--color-superficie);
     color: var(--color-texto);
     box-shadow: inset 0 0 0 1px var(--color-borde);
 }
 
+/* Color del icono de cada categoría. */
 .boton-categoria .icono {
     color: var(--color-secundario);
 }
 
+/* Aspecto de la categoría al pasar el mouse. */
 .boton-categoria:hover:not(:disabled) {
     filter: none;
     box-shadow: inset 0 0 0 1px var(--color-primario);
 }
 
+/* Categoría abierta (aria-expanded="true"): se destaca. */
 .boton-categoria[aria-expanded="true"] {
     background: var(--color-primario-suave);
     box-shadow: inset 0 0 0 2px var(--color-primario);
 }
 
+/* Lista de comandos de una categoría; aparece con una animación suave. */
 .lista-ayuda {
     display: flex;
     flex-direction: column;
@@ -725,12 +815,14 @@ select:focus-visible {
     animation: aparecer 0.2s ease-out;
 }
 
+/* Encabezado de la lista de comandos de una categoría. */
 .lista-ayuda h3 {
     margin: 0;
     font-size: 1.05rem;
     font-weight: 700;
 }
 
+/* Lista de comandos sin viñetas (también la lista de nombres de LED que arma voz.js). */
 .lista-comandos-detalle {
     display: flex;
     flex-direction: column;
@@ -739,6 +831,7 @@ select:focus-visible {
     list-style: none;
 }
 
+/* Cada comando: frases de ejemplo y su explicación, separados por una línea fina. */
 .lista-comandos-detalle li {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -747,17 +840,20 @@ select:focus-visible {
     border-bottom: 1px solid var(--color-borde);
 }
 
+/* El último comando no lleva línea inferior. */
 .lista-comandos-detalle li:last-child {
     padding-bottom: 0;
     border-bottom: 0;
 }
 
+/* Contenedor de las frases de ejemplo de un comando (se acomodan en varias líneas). */
 .comando-frases {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
+/* Cada frase de ejemplo se muestra como una «píldora» con letra monoespaciada. */
 .comando-frases code {
     display: inline-block;
     padding: 5px 11px;
@@ -770,12 +866,14 @@ select:focus-visible {
     overflow-wrap: anywhere;
 }
 
+/* Explicación de lo que hace el comando. */
 .comando-detalle {
     color: var(--color-texto-suave);
     font-size: 0.9rem;
     line-height: 1.5;
 }
 
+/* Animación de aparición suave de la lista de ayuda. */
 @keyframes aparecer {
     from { opacity: 0; transform: translateY(-4px); }
     to   { opacity: 1; transform: none; }
@@ -786,6 +884,7 @@ select:focus-visible {
    9. PANEL DE LEDs (las tarjetas las crea voz.js)
    ========================================================================== */
 
+/* Cuadrícula de tarjetas de LED (las crea voz.js). El número de columnas cambia según el ancho de pantalla (ver sección 12). */
 .lista-leds {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -794,6 +893,7 @@ select:focus-visible {
     font-size: 0.9rem;
 }
 
+/* Tarjeta de UN LED. Usa «áreas» de cuadrícula: titulo, icono, estado, edicion, voz y accion ubican cada parte (el nombre con el lápiz, el indicador, el estado, el formulario de nombre, el cartel «Por voz» y el botón). */
 .tarjeta-led {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -813,16 +913,19 @@ select:focus-visible {
 }
 
 /* La tarjeta se resalta cuando su LED está encendido */
+/* Si el LED está encendido (su indicador tiene la clase «encendido») toda la tarjeta toma un fondo amarillento. */
 .tarjeta-led:has(.indicador-led.encendido) {
     background: var(--color-led-suave);
     border-color: var(--color-led);
 }
 
+/* «display: contents»: la fila superior no genera caja propia y sus hijos se ubican directamente en las áreas de la tarjeta. */
 .fila-led {
     display: contents;
 }
 
 /* Nombre del LED + lápiz para cambiarlo */
+/* Bloque con el nombre del LED y el lápiz para renombrarlo (voz.js: crearTarjetaLed). */
 .led-titulo {
     display: flex;
     grid-area: titulo;
@@ -832,12 +935,14 @@ select:focus-visible {
     min-width: 0;
 }
 
+/* Nombre del LED: si es largo, baja de renglón en lugar de desbordar la tarjeta. */
 .led-titulo strong {
     min-width: 0;
     font-size: 1rem;
     overflow-wrap: anywhere;   /* un nombre largo baja de renglón en vez de desbordar */
 }
 
+/* Lápiz de «Cambiar nombre»: botón pequeño con borde. */
 .boton-renombrar {
     flex: none;
     width: 34px;
@@ -848,11 +953,13 @@ select:focus-visible {
     color: var(--color-texto-suave);
 }
 
+/* Tamaño del dibujo del lápiz. */
 .boton-renombrar .icono {
     width: 16px;
     height: 16px;
 }
 
+/* Aspecto del lápiz al pasar el mouse o con el formulario abierto (aria-expanded="true"). */
 .boton-renombrar:hover:not(:disabled),
 .boton-renombrar[aria-expanded="true"] {
     filter: none;
@@ -862,6 +969,7 @@ select:focus-visible {
 }
 
 /* Cómo se nombra este LED por voz */
+/* Cartel «Por voz: «comando encender cocina»» bajo cada LED. */
 .voz-led {
     grid-area: voz;
     margin: 10px 0 0;
@@ -873,11 +981,13 @@ select:focus-visible {
 
 /* Mientras se edita, la tarjeta ocupa toda la fila: en pantallas chicas las
    tarjetas miden unos 140 px y no cabrían el campo y los dos botones. */
+/* voz.js escribe data-editando="true" mientras se edita el nombre: la tarjeta pasa a ocupar toda la fila para que el formulario quepa. */
 .tarjeta-led[data-editando="true"] {
     grid-column: 1 / -1;
 }
 
 /* Formulario para cambiar el nombre: ocupa todo el ancho de la tarjeta */
+/* Formulario de cambio de nombre: ocupa todo el ancho de la tarjeta, con una línea fina que lo separa. */
 .formulario-nombre-led {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -888,11 +998,13 @@ select:focus-visible {
     border-top: 1px solid var(--color-borde);
 }
 
+/* Imprescindible: sin esto, «display: grid» anularía al atributo hidden y el formulario (o el aviso de error) se vería siempre. */
 .formulario-nombre-led[hidden],
 .aviso-nombre[hidden] {
     display: none;
 }
 
+/* Campo de texto del nombre del LED. */
 .campo-nombre-led {
     width: 100%;
     min-width: 0;
@@ -906,16 +1018,19 @@ select:focus-visible {
     font-size: 0.95rem;
 }
 
+/* Tamaño de la pista bajo el campo («Dejalo vacío para volver a...»). */
 .formulario-nombre-led .texto-secundario {
     font-size: 0.8rem;
 }
 
+/* Fila con los botones Guardar y Cancelar. */
 .acciones-nombre-led {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
+/* Tamaño de esos dos botones. */
 .acciones-nombre-led button {
     flex: 1;
     min-height: 40px;
@@ -924,11 +1039,13 @@ select:focus-visible {
 }
 
 /* Subtítulo de la lista de nombres actuales, dentro de la ayuda de LED */
+/* Subtítulo «Con los nombres que tienen ahora:» de la ayuda de LED. */
 .ayuda-leds-titulo {
     margin-top: 16px;
     font-weight: 600;
 }
 
+/* Texto «Encendido / Apagado» de la tarjeta. */
 .estado-led {
     grid-area: estado;
     align-self: start;
@@ -937,6 +1054,7 @@ select:focus-visible {
 }
 
 /* Bombilla: gris cuando está apagada, amarilla con brillo cuando está encendida */
+/* Círculo indicador del LED (apagado por defecto). */
 .indicador-led {
     display: grid;
     grid-area: icono;
@@ -949,6 +1067,7 @@ select:focus-visible {
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Dibujo de la bombilla dentro del círculo (se pinta con una máscara a partir de --icono-bombilla). */
 .indicador-led::before {
     content: "";
     width: 22px;
@@ -958,18 +1077,21 @@ select:focus-visible {
     mask: var(--icono-bombilla) center / contain no-repeat;
 }
 
+/* LED encendido: el círculo se ilumina con el color del LED y un resplandor (voz.js agrega la clase «encendido»). */
 .indicador-led.encendido {
     background: var(--color-led);
     color: var(--color-led-icono);
     box-shadow: 0 0 18px 2px var(--color-led-brillo);
 }
 
+/* Contenedor del botón Encender/Apagar de la tarjeta. */
 .botones-led {
     display: flex;
     grid-area: accion;
     margin-top: 12px;
 }
 
+/* Tamaño del botón de la tarjeta. */
 .botones-led button {
     flex: 1;
     min-height: 40px;
@@ -978,12 +1100,14 @@ select:focus-visible {
 }
 
 /* Encender o apagar todos los LED a la vez; quedan al pie del panel */
+/* Fila con «Encender todos» y «Apagar todos». */
 .acciones-leds {
     display: flex;
     gap: 10px;
     margin-top: auto;
 }
 
+/* Tamaño de esos botones. */
 .acciones-leds button {
     flex: 1;
     min-height: 42px;
@@ -991,6 +1115,7 @@ select:focus-visible {
     font-size: 0.88rem;
 }
 
+/* Dibujo de la bombilla (SVG codificado) que se usa como máscara en .indicador-led::before. */
 :root {
     /* Dibujo de la bombilla (SVG en línea, funciona sin internet) */
     --icono-bombilla: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5'/%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3C/svg%3E");
@@ -1001,12 +1126,14 @@ select:focus-visible {
    10. PANEL DEL SERVOMOTOR
    ========================================================================== */
 
+/* Panel del servo: una columna en pantallas chicas y dos (dial + controles) en pantallas anchas. */
 .servo-contenido {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 22px;
 }
 
+/* Columna de controles del servo (ángulo solicitado, deslizador, botón). */
 .servo-controles {
     display: flex;
     flex-direction: column;
@@ -1015,6 +1142,7 @@ select:focus-visible {
 }
 
 /* --- Dial: semicírculo de 0° a 180° con el servo como aguja --- */
+/* Columna del dial (dibujo del servo y lectura de la posición actual). */
 .servo-indicador {
     display: flex;
     flex-direction: column;
@@ -1025,6 +1153,7 @@ select:focus-visible {
     margin: 0;
 }
 
+/* El dibujo SVG del dial: se adapta al ancho disponible. */
 .dial-servo {
     display: block;
     width: 100%;
@@ -1033,6 +1162,7 @@ select:focus-visible {
     font-family: var(--fuente-base);
 }
 
+/* Fondo del semicírculo del dial. */
 .dial-plano {
     fill: var(--color-superficie-2);
     stroke: var(--color-borde);
@@ -1040,6 +1170,7 @@ select:focus-visible {
 }
 
 /* Puntas planas: así el arco termina exactamente en el ángulo de la aguja */
+/* Arcos del dial (fondo y progreso): trazo grueso con extremos redondeados. */
 .dial-pista,
 .dial-progreso {
     fill: none;
@@ -1047,31 +1178,37 @@ select:focus-visible {
     stroke-linecap: butt;
 }
 
+/* Arco de fondo (la pista completa). */
 .dial-pista {
     stroke: var(--color-borde);
 }
 
 /* El arco mide 180 unidades (una por grado); voz.js mueve el desfase */
+/* Arco que se va llenando según el ángulo: voz.js cambia stroke-dashoffset y hay una transición suave. */
 .dial-progreso {
     stroke: var(--color-primario);
     stroke-dasharray: 180;
     transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 
+/* Marcas (rayitas) del dial. */
 .dial-marcas line {
     stroke: var(--color-texto-suave);
     stroke-linecap: round;
 }
 
+/* Marcas menores (más finas y tenues). */
 .marca-menor {
     stroke-width: 1.5;
     opacity: 0.55;
 }
 
+/* Marcas mayores (cada 30°). */
 .marca-mayor {
     stroke-width: 2.5;
 }
 
+/* Números del dial (0, 30, 60... 180). */
 .dial-numeros text {
     fill: var(--color-texto-suave);
     font-size: 11px;
@@ -1081,24 +1218,29 @@ select:focus-visible {
 }
 
 /* --- Ilustración del servo: cuerpo fijo + cuerno que gira --- */
+/* Cuerpo del servo dibujado bajo el dial. */
 .servo-cuerpo {
     fill: var(--color-servo-cuerpo);
 }
 
+/* Orejas y carcasa del servo (con sombra). */
 .servo-oreja,
 .servo-carcasa {
     fill: var(--color-servo-cuerpo);
     filter: brightness(0.78);
 }
 
+/* Agujeros de las orejas. */
 .servo-agujero {
     fill: var(--color-superficie-2);
 }
 
+/* Placa frontal del servo. */
 .servo-placa {
     fill: rgb(0 0 0 / 0.22);
 }
 
+/* Rótulo «SG90» del servo. */
 .servo-modelo {
     fill: var(--color-texto-boton);
     font-size: 11px;
@@ -1106,6 +1248,7 @@ select:focus-visible {
     letter-spacing: 0.08em;
 }
 
+/* Cable del servo. */
 .servo-cable {
     fill: none;
     stroke-width: 3;
@@ -1117,11 +1260,13 @@ select:focus-visible {
 .servo-cable-senal     { stroke: var(--color-advertencia); }
 
 /* Aguja: gira sobre el eje (160, 170) del dibujo */
+/* Aguja del dial: gira alrededor del eje del servo (transform-origin) con una transición; voz.js le asigna rotate(Xdeg). */
 .servo-aguja {
     transform-origin: 160px 170px;
     transition: transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 
+/* Cuerno del servo (la aguja propiamente dicha). */
 .servo-cuerno {
     fill: var(--color-aguja);
     stroke: var(--color-aguja);
@@ -1129,16 +1274,19 @@ select:focus-visible {
     stroke-linejoin: round;
 }
 
+/* Agujero del cuerno. */
 .servo-agujero-cuerno {
     fill: var(--color-superficie);
 }
 
+/* Tapa central del eje. */
 .servo-tapa {
     fill: var(--color-superficie);
     stroke: var(--color-aguja);
     stroke-width: 2;
 }
 
+/* Tornillo del eje. */
 .servo-tornillo {
     fill: none;
     stroke: var(--color-aguja);
@@ -1146,6 +1294,7 @@ select:focus-visible {
     stroke-linecap: round;
 }
 
+/* Lectura «Posición actual: 90°» bajo el dial. */
 .servo-lectura {
     display: flex;
     align-items: baseline;
@@ -1154,6 +1303,7 @@ select:focus-visible {
     font-size: 0.9rem;
 }
 
+/* El número grande de esa lectura (#angulo-actual). */
 .servo-lectura strong {
     color: var(--color-texto);
     font-size: 2rem;
@@ -1162,6 +1312,7 @@ select:focus-visible {
     font-variant-numeric: tabular-nums;
 }
 
+/* Caja «Posición solicitada» con su valor. */
 .angulo {
     display: flex;
     align-items: baseline;
@@ -1175,6 +1326,7 @@ select:focus-visible {
     font-size: 0.9rem;
 }
 
+/* Valor de la posición solicitada (#valor-angulo). */
 #valor-angulo {
     color: var(--color-texto);
     font-size: 2rem;
@@ -1183,12 +1335,14 @@ select:focus-visible {
     font-variant-numeric: tabular-nums;
 }
 
+/* Contenedor del deslizador de ángulo. */
 .control-deslizador {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
+/* Deslizador del ángulo (#control-servo): se le quita el aspecto nativo para dibujarlo con los colores del tema. */
 #control-servo {
     -webkit-appearance: none;
     appearance: none;
@@ -1200,18 +1354,21 @@ select:focus-visible {
     cursor: pointer;
 }
 
+/* Pista del deslizador en Chrome/Safari/Edge (prefijo -webkit). */
 #control-servo::-webkit-slider-runnable-track {
     height: 8px;
     border-radius: 999px;
     background: var(--color-borde);
 }
 
+/* Pista del deslizador en Firefox (prefijo -moz): hace lo mismo que la anterior. */
 #control-servo::-moz-range-track {
     height: 8px;
     border-radius: 999px;
     background: var(--color-borde);
 }
 
+/* Perilla del deslizador en Chrome/Safari/Edge. */
 #control-servo::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 24px;
@@ -1223,6 +1380,7 @@ select:focus-visible {
     box-shadow: 0 0 0 1px var(--color-primario), 0 2px 6px rgb(0 0 0 / 0.25);
 }
 
+/* Perilla del deslizador en Firefox. */
 #control-servo::-moz-range-thumb {
     box-sizing: border-box;
     width: 24px;
@@ -1233,6 +1391,7 @@ select:focus-visible {
     box-shadow: 0 0 0 1px var(--color-primario), 0 2px 6px rgb(0 0 0 / 0.25);
 }
 
+/* Los valores de los extremos del deslizador (0°, 90°, 180°). */
 .extremos {
     display: flex;
     justify-content: space-between;
@@ -1241,6 +1400,7 @@ select:focus-visible {
     font-variant-numeric: tabular-nums;
 }
 
+/* Los textos que pueden ser largos (mensajes, resultado de voz) se parten en lugar de desbordar su caja. */
 #estado-servo,
 #estado-sensor,
 #resultado-voz,
@@ -1249,6 +1409,7 @@ select:focus-visible {
     overflow-wrap: anywhere;
 }
 
+/* Texto de estado del servo y del sensor. */
 #estado-servo,
 #estado-sensor {
     margin: 0;
@@ -1257,6 +1418,7 @@ select:focus-visible {
     line-height: 1.5;
 }
 
+/* Botones «Aplicar posición» y «Activar medición»: ocupan todo el ancho. */
 #enviar-servo,
 #alternar-sensor {
     width: 100%;
@@ -1268,6 +1430,7 @@ select:focus-visible {
    11. PANEL DEL SENSOR ULTRASÓNICO
    ========================================================================== */
 
+/* Caja grande con la lectura de distancia (index.html: .medicion). */
 .medicion {
     display: flex;
     align-items: baseline;
@@ -1280,6 +1443,7 @@ select:focus-visible {
     transition: border-color 0.2s ease;
 }
 
+/* El número de la distancia (#distancia): muy grande, con cifras de igual ancho. */
 .medicion strong {
     font-size: clamp(2.75rem, 2rem + 2vw, 4rem);
     font-weight: 700;
@@ -1288,6 +1452,7 @@ select:focus-visible {
     font-variant-numeric: tabular-nums;
 }
 
+/* La unidad «cm». */
 .medicion span {
     color: var(--color-texto-suave);
     font-size: 1.25rem;
@@ -1295,20 +1460,24 @@ select:focus-visible {
 }
 
 /* Con la medición activa, la lectura se resalta con el color secundario */
+/* Con el sensor activo (voz.js pone la clase boton-apagar en el botón del sensor) la caja cambia de color de borde... */
 .panel-distancia:has(#alternar-sensor.boton-apagar) .medicion {
     border-color: var(--color-secundario);
 }
 
+/* ...y el número toma el color del acento. */
 .panel-distancia:has(#alternar-sensor.boton-apagar) .medicion strong {
     color: var(--color-secundario);
 }
 
+/* Panel del sensor: lectura y gráfico (en una columna o en dos según el ancho). */
 .sensor-contenido {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 20px;
 }
 
+/* Columna de la lectura de distancia. */
 .sensor-lectura {
     display: flex;
     flex-direction: column;
@@ -1316,6 +1485,7 @@ select:focus-visible {
     min-width: 0;
 }
 
+/* Zona con estado, ayuda de voz y botón del sensor. */
 .sensor-acciones {
     display: flex;
     flex-direction: column;
@@ -1323,10 +1493,12 @@ select:focus-visible {
     min-width: 0;
 }
 
+/* Texto de estado del sensor centrado en pantallas chicas. */
 .panel-distancia #estado-sensor {
     text-align: center;
 }
 
+/* Idem para el texto de ayuda (se alinea a la izquierda en pantallas anchas). */
 .panel-distancia .texto-secundario {
     text-align: center;
 }
@@ -1338,6 +1510,7 @@ select:focus-visible {
    variables de color del inicio de este archivo.
    ========================================================================== */
 
+/* Contenedor del gráfico de distancia (lo dibuja grafico.js). */
 .grafico-distancia {
     display: flex;
     flex-direction: column;
@@ -1346,6 +1519,7 @@ select:focus-visible {
     margin: 0;
 }
 
+/* Cabecera del gráfico: título y estadísticas (mín, prom, máx). */
 .grafico-cabecera {
     display: flex;
     flex-wrap: wrap;
@@ -1354,18 +1528,21 @@ select:focus-visible {
     gap: 4px 16px;
 }
 
+/* Título del gráfico («Últimos 60 segundos»). */
 .grafico-cabecera figcaption {
     color: var(--color-texto-suave);
     font-size: 0.9rem;
     font-weight: 600;
 }
 
+/* Estadísticas del gráfico. */
 .grafico-estadisticas {
     color: var(--color-texto-suave);
     font-size: 0.82rem;
     font-variant-numeric: tabular-nums;
 }
 
+/* Área donde se dibuja el gráfico: posición relativa para ubicar el SVG, el mensaje de vacío y el globo. */
 .grafico-lienzo {
     position: relative;
     flex: 1 1 auto;
@@ -1376,6 +1553,7 @@ select:focus-visible {
     border-radius: var(--radio-caja);
 }
 
+/* El SVG ocupa toda el área. */
 .grafico-lienzo svg {
     position: absolute;
     inset: 0;
@@ -1386,23 +1564,27 @@ select:focus-visible {
     touch-action: pan-y;
 }
 
+/* Eje inferior del gráfico (línea de 0 cm). */
 .grafico-eje {
     stroke: var(--color-borde);
     stroke-width: 1.5;
 }
 
+/* Cuadrícula (líneas punteadas). */
 .grafico-cuadricula {
     stroke: var(--color-borde);
     stroke-width: 1;
     stroke-dasharray: 2 4;
 }
 
+/* Números y rótulos de los ejes. */
 .grafico-texto {
     fill: var(--color-texto-suave);
     font-size: 11px;
     font-variant-numeric: tabular-nums;
 }
 
+/* Línea de la distancia medida. */
 .grafico-linea {
     fill: none;
     stroke: var(--color-secundario);
@@ -1411,35 +1593,41 @@ select:focus-visible {
     stroke-linejoin: round;
 }
 
+/* Área sombreada bajo la línea. */
 .grafico-area {
     fill: var(--color-secundario-suave);
     fill-opacity: 0.85;
     stroke: none;
 }
 
+/* Punto de la lectura más reciente (y del que marca el puntero). */
 .grafico-punto {
     fill: var(--color-secundario);
     stroke: var(--color-superficie-2);
     stroke-width: 2;
 }
 
+/* Punto de una muestra aislada (sin vecinos para unir con línea). */
 .grafico-punto-suelto {
     fill: var(--color-secundario);
 }
 
 /* Con el sensor detenido, el último tramo queda atenuado */
+/* Con el sensor detenido, línea y área se ven atenuadas (grafico.js escribe data-estado="detenido"). */
 .grafico-lienzo[data-estado="detenido"] .grafico-linea,
 .grafico-lienzo[data-estado="detenido"] .grafico-area {
     opacity: 0.55;
 }
 
 /* Umbral de cada regla: línea punteada con su nombre */
+/* Línea punteada del umbral de una regla. */
 .grafico-umbral {
     stroke: var(--color-advertencia);
     stroke-width: 1.5;
     stroke-dasharray: 6 4;
 }
 
+/* Nombre del umbral («Regla 1 < 20 cm»), con contorno para leerse sobre la línea. */
 .grafico-texto-umbral {
     fill: var(--color-advertencia-texto);
     font-size: 11px;
@@ -1449,16 +1637,19 @@ select:focus-visible {
     stroke-width: 3px;
 }
 
+/* Umbral de una regla desactivada o en pausa: atenuado. */
 .grafico-umbral-apagado {
     opacity: 0.35;
 }
 
+/* Línea vertical que acompaña al puntero. */
 .grafico-guia {
     stroke: var(--color-texto-suave);
     stroke-width: 1;
     stroke-dasharray: 3 3;
 }
 
+/* Mensaje centrado cuando no hay datos («Activá el sensor...»). */
 .grafico-vacio {
     position: absolute;
     inset: 0;
@@ -1472,6 +1663,7 @@ select:focus-visible {
     pointer-events: none;
 }
 
+/* Globo con el valor exacto bajo el puntero. */
 .grafico-globo {
     position: absolute;
     z-index: 2;
@@ -1491,6 +1683,7 @@ select:focus-visible {
    11c. AUTOMATIZACIONES
    ========================================================================== */
 
+/* Formulario «Si la distancia es... entonces...» del panel de automatizaciones. */
 .formulario-regla {
     display: flex;
     flex-direction: column;
@@ -1501,11 +1694,13 @@ select:focus-visible {
     border-radius: var(--radio-caja);
 }
 
+/* Palabras fijas del formulario («Si la distancia es», «entonces»). */
 .regla-palabra {
     font-weight: 600;
 }
 
 /* Cada fila se lee como parte de una oración: «Si la distancia es…» / «entonces…» */
+/* Cada renglón del formulario (se acomoda en varias líneas si no entra). */
 .regla-fila {
     display: flex;
     flex-wrap: wrap;
@@ -1513,6 +1708,7 @@ select:focus-visible {
     gap: 10px 12px;
 }
 
+/* Campo numérico con su unidad (cm o °). */
 .regla-numero {
     display: inline-flex;
     align-items: center;
@@ -1521,10 +1717,12 @@ select:focus-visible {
     font-weight: 600;
 }
 
+/* El botón «Agregar regla» se alinea a la derecha. */
 .regla-fila button[type="submit"] {
     margin-left: auto;
 }
 
+/* Lista de reglas (automatizaciones.js agrega una fila por regla). */
 .lista-reglas {
     display: flex;
     flex-direction: column;
@@ -1534,10 +1732,12 @@ select:focus-visible {
     list-style: none;
 }
 
+/* Sin reglas, la lista no ocupa espacio. */
 .lista-reglas:empty {
     display: none;
 }
 
+/* Fila de una regla: indicador, descripción, interruptor y papelera. */
 .regla {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -1550,6 +1750,7 @@ select:focus-visible {
     transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
+/* Punto de estado de la regla. */
 .regla-indicador {
     width: 10px;
     height: 10px;
@@ -1557,26 +1758,31 @@ select:focus-visible {
     background: var(--color-texto-suave);
 }
 
+/* Regla en espera: color de «en espera». */
 .regla[data-situacion="espera"] .regla-indicador {
     background: var(--color-secundario);
 }
 
 /* Regla cumplida ahora mismo: se resalta (el texto de abajo también lo dice) */
+/* Regla que se cumple ahora: la fila se destaca... */
 .regla[data-situacion="cumplida"] {
     background: var(--color-exito-suave);
     border-color: var(--color-exito);
 }
 
+/* ...y su punto parpadea. */
 .regla[data-situacion="cumplida"] .regla-indicador {
     background: var(--color-exito);
     animation: pulso-microfono 1.8s ease-out infinite;
 }
 
+/* Regla desactivada o en pausa: se ve atenuada. (automatizaciones.js escribe data-situacion en cada fila.) */
 .regla[data-situacion="inactiva"],
 .regla[data-situacion="pausada"] {
     opacity: 0.7;
 }
 
+/* Descripción de la regla («Si la distancia es menor a 20 cm → Encender cocina»). */
 .regla-descripcion {
     margin: 0;
     font-weight: 600;
@@ -1584,6 +1790,7 @@ select:focus-visible {
     overflow-wrap: anywhere;
 }
 
+/* Línea de detalle («Regla 1 · En espera · 2 disparos...»). */
 .regla-meta {
     margin: 2px 0 0;
     color: var(--color-texto-suave);
@@ -1591,6 +1798,7 @@ select:focus-visible {
     line-height: 1.4;
 }
 
+/* Mensaje de «sin reglas» o «sin actividad»: caja con borde punteado. */
 .reglas-vacio {
     margin: 0;
     padding: 18px 16px;
@@ -1603,6 +1811,7 @@ select:focus-visible {
 }
 
 /* Interruptor para activar o desactivar una regla */
+/* Interruptor (tipo «switch») para activar o desactivar una regla. */
 .interruptor {
     position: relative;
     display: inline-flex;
@@ -1612,6 +1821,7 @@ select:focus-visible {
     cursor: pointer;
 }
 
+/* La casilla real queda invisible sobre el interruptor (sigue funcionando con teclado y lectores de pantalla). */
 .interruptor input {
     position: absolute;
     inset: 0;
@@ -1622,6 +1832,7 @@ select:focus-visible {
     cursor: pointer;
 }
 
+/* La pista del interruptor (el óvalo de fondo). */
 .interruptor-pista {
     position: relative;
     width: 100%;
@@ -1631,6 +1842,7 @@ select:focus-visible {
     transition: background-color 0.2s ease;
 }
 
+/* La perilla que se desplaza dentro de la pista. */
 .interruptor-pista::after {
     content: "";
     position: absolute;
@@ -1644,18 +1856,22 @@ select:focus-visible {
     transition: transform 0.2s ease;
 }
 
+/* Interruptor activado: la pista cambia de color... */
 .interruptor input:checked + .interruptor-pista {
     background: var(--color-primario);
 }
 
+/* ...y la perilla se mueve a la derecha. */
 .interruptor input:checked + .interruptor-pista::after {
     transform: translateX(18px);
 }
 
+/* Quita el contorno nativo de la casilla invisible... */
 .interruptor input:focus-visible {
     outline: none;
 }
 
+/* ...y lo dibuja alrededor del interruptor al navegar con teclado. */
 .interruptor input:focus-visible + .interruptor-pista {
     outline: 3px solid var(--color-foco);
     outline-offset: 3px;
@@ -1666,6 +1882,7 @@ select:focus-visible {
    11d. REGISTRO DE COMANDOS
    ========================================================================== */
 
+/* Barra de herramientas del registro: filtro y botón «Limpiar». */
 .registro-herramientas {
     display: flex;
     flex-wrap: wrap;
@@ -1674,17 +1891,20 @@ select:focus-visible {
     gap: 10px 12px;
 }
 
+/* Filtro del registro (rótulo + menú). */
 .registro-filtro {
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
+/* Tamaño del menú del filtro. */
 .registro-filtro select {
     min-height: 38px;
     padding: 4px 10px;
 }
 
+/* Contador de eventos del registro. */
 .registro-contador {
     margin: 0;
     color: var(--color-texto-suave);
@@ -1693,6 +1913,7 @@ select:focus-visible {
     text-align: right;
 }
 
+/* Lista de eventos del registro: altura máxima con desplazamiento propio. */
 .lista-registro {
     max-height: 400px;
     margin: 0;
@@ -1704,10 +1925,12 @@ select:focus-visible {
     border-radius: var(--radio-caja);
 }
 
+/* Sin eventos, la lista no ocupa espacio. */
 .lista-registro:empty {
     display: none;
 }
 
+/* Fila de un evento: hora, etiqueta y detalle (registro.js). */
 .registro-fila {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -1717,10 +1940,12 @@ select:focus-visible {
     border-bottom: 1px solid var(--color-borde);
 }
 
+/* La última fila no lleva línea inferior. */
 .registro-fila:last-child {
     border-bottom: 0;
 }
 
+/* Hora del evento. */
 .registro-hora {
     color: var(--color-texto-suave);
     font-size: 0.8rem;
@@ -1728,6 +1953,7 @@ select:focus-visible {
 }
 
 /* La etiqueta dice el tipo con palabras: el color solo lo refuerza */
+/* Etiqueta del evento (Orden, Error, Ignorada, Regla). */
 .registro-etiqueta {
     justify-self: start;
     padding: 0 9px;
@@ -1739,26 +1965,31 @@ select:focus-visible {
     line-height: 1.7;
 }
 
+/* Etiqueta de un evento con error (rojo). */
 .registro-fila[data-estado="error"] .registro-etiqueta {
     background: var(--color-peligro-suave);
     color: var(--color-peligro-texto);
 }
 
+/* Etiqueta de una frase ignorada (por no empezar con la palabra de inicio). */
 .registro-fila[data-estado="ignorado"] .registro-etiqueta {
     background: var(--color-borde);
     color: var(--color-texto-suave);
 }
 
+/* Etiqueta de una regla disparada correctamente. */
 .registro-fila[data-origen="regla"][data-estado="ok"] .registro-etiqueta {
     background: var(--color-secundario-suave);
     color: var(--color-secundario);
 }
 
+/* Zona de texto y resultado del evento. */
 .registro-detalle {
     grid-column: 1 / -1;
     min-width: 0;
 }
 
+/* Texto escuchado por Vosk, con letra monoespaciada. */
 .registro-texto {
     margin: 0;
     font-family: var(--fuente-codigo);
@@ -1767,10 +1998,12 @@ select:focus-visible {
     overflow-wrap: anywhere;
 }
 
+/* Las frases ignoradas se ven atenuadas. */
 .registro-fila[data-estado="ignorado"] .registro-texto {
     color: var(--color-texto-suave);
 }
 
+/* Resultado del evento (lo que respondió el sistema). */
 .registro-resultado {
     margin: 2px 0 0;
     color: var(--color-texto-suave);
@@ -1781,10 +2014,301 @@ select:focus-visible {
 
 
 /* ==========================================================================
+   11B. PANEL «ASISTENTE DE VOZ» (lo controla static/js/asistente.js)
+   Modo de activación, tiempo de espera y palabras de activación editables.
+   También: el estado del asistente (chip) y su burbuja de respuesta, que están
+   dentro del panel de control por voz.
+   Solo usa propiedades estándar (flex, grid, accent-color) que funcionan en
+   Firefox, Chrome, Chromium, Edge y Safari.
+   ========================================================================== */
+
+/* El panel ocupa toda la fila de la cuadrícula (de la primera a la última columna). */
+.panel-asistente {
+    grid-column: 1 / -1;
+}
+
+/* Contenido del panel: una columna en celulares (en pantallas anchas pasa a dos, ver más abajo). */
+.asistente-contenido {
+    display: grid;
+    /* minmax(0, 1fr): la columna puede encogerse por debajo del ancho de su contenido (si no, el campo de
+       texto la estiraba más que la pantalla en celulares angostos). */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+}
+
+/* «fieldset» agrupa los dos modos (botones de opción). Se le quita el borde y el relleno que trae el navegador. */
+.asistente-modos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.asistente-modos legend {
+    margin-bottom: 8px;
+    padding: 0;
+}
+
+/* Una opción de modo: el botón redondo (radio) a la izquierda y una tarjeta con la explicación. Toda la fila es clicable. */
+.opcion-modo {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.opcion-modo input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 14px 0 0;
+    /* accent-color pinta el botón redondo con el color del tema (Firefox 92+, Chrome 93+, Safari 15.4+). */
+    accent-color: var(--color-primario);
+}
+
+.opcion-modo-texto {
+    display: grid;
+    flex: 1;
+    gap: 4px;
+    padding: 12px 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-caja);
+    color: var(--color-texto-suave);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.opcion-modo-texto strong {
+    color: var(--color-texto);
+    font-size: 0.95rem;
+}
+
+/* Modo elegido: la tarjeta se destaca. Se usa el selector «hermano» (+) en lugar de :has() para que funcione también en navegadores más viejos. */
+.opcion-modo input:checked + .opcion-modo-texto {
+    background: var(--color-primario-suave);
+    border-color: var(--color-primario);
+}
+
+/* Contorno visible al navegar con el teclado (Tab y flechas). */
+.opcion-modo input:focus-visible + .opcion-modo-texto {
+    outline: 3px solid var(--color-foco);
+    outline-offset: 2px;
+}
+
+/* Campo del tiempo de espera y sus textos de apoyo. */
+.asistente-espera {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+}
+
+.asistente-espera input[type="number"] {
+    justify-self: start;
+}
+
+.asistente-espera .texto-secundario,
+.asistente-palabras .texto-secundario {
+    font-size: 0.8rem;
+}
+
+/* Columna de las palabras de activación. */
+.asistente-palabras {
+    display: grid;
+    /* minmax(0, 1fr) en cada rejilla interna: sin esto la columna automática se estira hasta el ancho natural
+       del campo de texto y el panel desborda en pantallas angostas. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-content: start;
+    min-width: 0;
+}
+
+/* Lista de palabras: «etiquetas» que se acomodan en varias líneas. */
+.lista-palabras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Cada palabra: una píldora con su texto y sus botones. */
+.palabra-etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 6px 6px 6px 12px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-radius: 999px;
+    font-size: 0.9rem;
+}
+
+/* La palabra principal (la primera) se destaca. */
+.palabra-etiqueta.es-principal {
+    background: var(--color-primario-suave);
+    border-color: var(--color-primario);
+}
+
+.palabra-texto {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.palabra-marca {
+    color: var(--color-primario);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Botones chicos dentro de la píldora («Hacer principal» y «×»): con borde y sin relleno. */
+.palabra-accion {
+    min-height: 28px;
+    padding: 2px 10px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--color-borde);
+    color: var(--color-texto-suave);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.palabra-accion:hover:not(:disabled) {
+    filter: none;
+    box-shadow: inset 0 0 0 1px var(--color-primario);
+    color: var(--color-primario);
+}
+
+/* El botón «×» es redondo; al pasar el mouse se vuelve rojo (quitar). */
+.palabra-quitar {
+    width: 28px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.palabra-quitar:hover:not(:disabled) {
+    box-shadow: inset 0 0 0 1px var(--color-peligro);
+    color: var(--color-peligro);
+}
+
+/* Formulario para agregar una palabra: campo + botón en una fila. */
+.formulario-palabra {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+}
+
+.fila-palabra {
+    display: flex;
+    gap: 8px;
+}
+
+.fila-palabra input {
+    flex: 1;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 12px;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: var(--radio-boton);
+    color: var(--color-texto);
+    font: inherit;
+    font-size: 0.95rem;
+}
+
+.fila-palabra button {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+/* El botón «Restablecer» no se estira a todo el ancho. */
+#restablecer-palabras {
+    justify-self: start;
+}
+
+/* El aviso de resultado se oculta con el atributo hidden (display no debe pisarlo). */
+.aviso-asistente[hidden] {
+    display: none;
+}
+
+/* Chip con el estado del asistente (dentro del panel de voz). El color lo da data-estado, que escribe asistente.js:
+   «siempre» (modo palabra en cada comando), «espera» (dormido) y «despierto» (escuchando sin palabra). */
+.estado-asistente {
+    margin: 0;
+    padding: 10px 14px;
+    background: var(--color-superficie-2);
+    border: 1px solid var(--color-borde);
+    border-left-width: 4px;
+    border-radius: var(--radio-caja);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.estado-asistente[data-estado="siempre"] {
+    border-left-color: var(--color-primario);
+}
+
+.estado-asistente[data-estado="espera"] {
+    background: var(--color-advertencia-suave);
+    border-left-color: var(--color-advertencia);
+}
+
+.estado-asistente[data-estado="despierto"] {
+    background: var(--color-exito-suave);
+    border-left-color: var(--color-exito);
+}
+
+/* Burbuja «Respuesta del asistente»: lleva una barra de acento a la izquierda (como el resultado del comando). */
+.bloque-asistente p {
+    border-left: 4px solid var(--color-secundario);
+}
+
+/* A partir de 860 px el panel usa dos columnas: modos y espera a la izquierda, palabras a la derecha. */
+@media (min-width: 860px) {
+    .asistente-contenido {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    /* Ubicación explícita: modos (fila 1) y espera (fila 2) a la izquierda; las palabras a la derecha ocupando las dos filas. */
+    .asistente-modos {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .asistente-espera {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .asistente-palabras {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+
+    /* El aviso de resultado ocupa las dos columnas. */
+    .aviso-asistente {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* ==========================================================================
    12. ADAPTACIÓN A PANTALLAS CHICAS
    ========================================================================== */
 
 /* Menú de ayuda: cuatro categorías en fila y cada comando junto a su explicación */
+/* A partir de 700 px de ancho (tabletas y computadoras). */
 @media (min-width: 700px) {
     .menu-ayuda-categorias {
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1798,6 +2322,7 @@ select:focus-visible {
 }
 
 /* Servo y sensor se reparten el panel en dos o tres zonas cuando hay lugar */
+/* A partir de 780 px: el servo muestra dial y controles lado a lado. */
 @media (min-width: 780px) {
     .servo-contenido {
         grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
@@ -1808,6 +2333,7 @@ select:focus-visible {
 }
 
 /* Sensor: la lectura a la izquierda y el gráfico ocupando el resto */
+/* A partir de 900 px: el sensor muestra la lectura a la izquierda y el gráfico a la derecha. */
 @media (min-width: 900px) {
     .sensor-contenido {
         grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
@@ -1821,6 +2347,7 @@ select:focus-visible {
     }
 }
 
+/* A partir de 860 px: el panel de voz usa dos columnas y la ayuda ocupa toda la fila inferior. */
 @media (min-width: 860px) {
     .voz-contenido {
         grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -1833,6 +2360,7 @@ select:focus-visible {
 }
 
 /* Por debajo de este ancho, los paneles se apilan en una sola columna */
+/* Hasta 1160 px: los paneles se apilan en una sola columna. */
 @media (max-width: 1160px) {
     .panel-principal {
         grid-template-columns: minmax(0, 1fr);
@@ -1843,12 +2371,14 @@ select:focus-visible {
     }
 }
 
+/* Entre 700 y 1160 px: las tarjetas de LED se ordenan en 4 columnas. */
 @media (min-width: 700px) and (max-width: 1160px) {
     .lista-leds {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
+/* Celulares (hasta 640 px): menos relleno y botones de ancho completo. */
 @media (max-width: 640px) {
     .panel-principal {
         grid-template-columns: minmax(0, 1fr);
@@ -1879,6 +2409,7 @@ select:focus-visible {
     }
 }
 
+/* Si el usuario pidió «reducir movimiento» en su sistema, se desactivan animaciones y transiciones (accesibilidad). */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

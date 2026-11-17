@@ -1,2 +1,5 @@
+# requirements.txt: LIBRERÍAS EXTERNAS (se instalan con: pip install -r requirements.txt)
+# Flask: el servidor web de app.py (versión 3.1 o superior, pero menor que 4).
 Flask>=3.1,<4
+# Vosk: reconocimiento de voz offline que usa reconocimiento_voz.py (versión exacta). RPi.GPIO, que usa dispositivos.py, ya viene incluido en Raspberry Pi OS.
 vosk==0.3.45

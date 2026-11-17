@@ -1,23 +1,52 @@
 <!DOCTYPE html>
-<html lang="es">
+{# ┌─────────────────────────────────────────────────────────────────────────┐ #}
+{# │ templates/index.html: LA PÁGINA (plantilla Jinja2)                      │ #}
+{# │                                                                         │ #}
+{# │ Los comentarios con este formato { # ... # } son de Jinja: NO llegan al │ #}
+{# │ navegador (a diferencia de los comentarios HTML).                       │ #}
+{# │                                                                         │ #}
+{# │ QUIÉN LA USA                                                            │ #}
+{# │  - app.py: la ruta «/» (función inicio) la entrega con                  │ #}
+{# │    render_template("index.html", ayuda=..., palabra_inicio=...,         │ #}
+{# │    palabras_inicio_texto=...). Esas tres variables se usan abajo con    │ #}
+{# │    la sintaxis {{ variable }}; {% ... %} son instrucciones (if, for).   │ #}
+{# │                                                                         │ #}
+{# │ QUÉ ARCHIVOS CARGA                                                      │ #}
+{# │  - static/css/estilos.css ... el aspecto de toda la página.             │ #}
+{# │  - static/js/tema.js ........ tema claro/oscuro (se carga en el <head>).│ #}
+{# │  - static/js/ayuda.js, grafico.js, automatizaciones.js, registro.js y   │ #}
+{# │    voz.js .................... al final del <body> (cada uno controla   │ #}
+{# │    los elementos con id que están definidos en esta plantilla).         │ #}
+{# │                                                                         │ #}
+{# │ ESTRUCTURA: encabezado + 7 paneles: Control por voz (con la ayuda),     │ #}
+{# │ Asistente de voz, Iluminación, Servomotor, Sensor ultrasónico,          │ #}
+{# │ Automatizaciones y Registro de comandos.                                │ #}
+{# └─────────────────────────────────────────────────────────────────────────┘ #}
+<html lang="es" data-palabra-inicio="{{ palabra_inicio }}">
+{# Cabecera: datos que no se ven en la página (codificación, tamaño en celulares, título de la pestaña y archivos que se cargan). #}
 <head>
     <meta charset="UTF-8">
+    {# Hace que la página se adapte al ancho de celulares y tabletas. #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# Avisa al navegador que la página admite tema claro y oscuro (afecta controles nativos como las barras de desplazamiento). #}
     <meta name="color-scheme" content="light dark">
 
     <title>Control de Raspberry Pi</title>
 
+    {# Hoja de estilos. url_for("static", ...) es una función de Flask que arma la dirección del archivo static/css/estilos.css. #}
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='css/estilos.css') }}"
     >
 
-    <!-- Se carga acá (sin defer) para aplicar el tema antes de dibujar la página -->
+    
+    {# tema.js se carga ya en el <head> y sin «defer» para aplicar el tema antes de dibujar la página (así no hay parpadeo). #}
     <script src="{{ url_for('static', filename='js/tema.js') }}"></script>
 </head>
 
 <body>
 
+    {# ENCABEZADO: logo, título y botón para cambiar de tema. El botón (#alternar-tema) lo controla static/js/tema.js. #}
     <header class="encabezado">
         <div class="encabezado-contenido">
             <span class="marca-icono" aria-hidden="true">
@@ -42,9 +71,12 @@
         </div>
     </header>
 
+    {# CONTENIDO PRINCIPAL: una tarjeta (<section class="panel">) por cada función. #}
     <main class="panel-principal">
 
         <!-- ============ CONTROL POR VOZ ============ -->
+        {# ═══ PANEL 1: CONTROL POR VOZ ═══ #}
+        {# Lo controla static/js/voz.js: botones del micrófono, estado, texto que entiende Vosk y resultado del comando. Los atributos aria-* ayudan a lectores de pantalla. #}
         <section class="panel panel-voz" aria-labelledby="titulo-voz">
             <header class="panel-cabecera">
                 <span class="panel-icono" aria-hidden="true">
@@ -56,13 +88,17 @@
                 </div>
             </header>
 
+            {# Contenedor de las dos columnas del panel (controles a la izquierda, texto a la derecha) y de la ayuda. #}
             <div class="voz-contenido">
 
+                {# Columna izquierda: estado del micrófono, botones y aviso de Vosk. #}
                 <div class="voz-control">
+                    {# Texto de estado del micrófono («Micrófono apagado / encendido»). aria-live hace que los lectores de pantalla anuncien los cambios. #}
                     <p id="estado-microfono" class="estado-microfono" aria-live="polite">
                         Micrófono apagado
                     </p>
 
+                    {# Botones Activar / Apagar micrófono (voz.js: iniciarMicrofono y detenerMicrofono). #}
                     <div class="botones-microfono">
                         <button id="activar-microfono" type="button">
                             <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg>
@@ -75,17 +111,39 @@
                         </button>
                     </div>
 
+                    {# Estado del asistente: «en espera» o «despierto (28 s)» en modo asistente; o el modo «palabra en cada comando». Lo escribe asistente.js. #}
+                    <p id="estado-asistente" class="estado-asistente" data-estado="siempre" aria-live="polite">
+                        Cargando el asistente...
+                    </p>
+
+                    {# Aviso sobre si Vosk y el modelo están instalados (voz.js lo completa con GET /api/voz/estado de app.py). #}
                     <p id="estado-reconocimiento" class="aviso" aria-live="polite">
                         Comprobando reconocimiento offline...
                     </p>
                 </div>
 
+                {# Columna derecha: lo que va entendiendo Vosk y el resultado de cada orden. #}
                 <div class="voz-salida">
                     <div class="bloque-texto">
                         <span class="etiqueta">Texto que interpreta Vosk en tiempo real</span>
+                        {# Texto en tiempo real de Vosk (voz.js lo actualiza con cada fragmento de audio). #}
                         <p id="texto-vosk" aria-live="polite">Todavía no se detecta voz.</p>
                     </div>
 
+                    {# Respuesta del asistente: saludo de bienvenida, despedida y avisos de la conversación. Se muestra como texto y se lee en voz alta (voz.js y asistente.js la escriben; voz-salida.js la dice). #}
+                    <div class="bloque-texto bloque-asistente">
+                        <span class="etiqueta">Respuesta del asistente</span>
+                        <p id="respuesta-asistente" aria-live="polite">
+                            Diga «<span data-palabra-principal>{{ palabra_inicio }}</span>» para llamar al asistente.
+                        </p>
+                        {# Casilla que activa o apaga la lectura en voz alta de la respuesta (voz-salida.js). #}
+                        <label class="opcion-voz-respuestas">
+                            <input type="checkbox" id="voz-respuestas" checked>
+                            Leer las respuestas en voz alta
+                        </label>
+                    </div>
+
+                    {# Resultado del último comando: el mensaje que respondió app.py (por ejemplo «cocina: encender.»). También muestra avisos al renombrar un LED. #}
                     <div class="bloque-texto bloque-resultado">
                         <span class="etiqueta">Resultado del comando</span>
                         <p id="resultado-voz" aria-live="polite">
@@ -94,19 +152,21 @@
                     </div>
                 </div>
 
-                <!-- ============ AYUDA DE COMANDOS ============
-                     Las cuatro listas se generan a partir de comandos_ayuda.py.
-                     La lógica de mostrar y ocultar está en static/js/ayuda.js. -->
+                
+                {# Define (con Jinja) los dibujos de los botones de categoría de la ayuda. Cada clave coincide con una categoría de comandos_ayuda.py. #}
                 {% set iconos_ayuda = {
                     "leds": '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/>',
                     "servo": '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
                     "sensor": '<path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/>',
                     "generales": '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
                 } %}
+                {# ═══ AYUDA DE COMANDOS ═══ #}
+                {# Las listas se generan con los textos de comandos_ayuda.py (que entrega app.py en la variable «ayuda»). Mostrar y ocultar lo hace static/js/ayuda.js. #}
                 <div class="voz-ayuda">
+                    {# Texto con las palabras de inicio configuradas en app.py (PALABRAS_DE_INICIO) y botón que despliega el menú. #}
                     <div class="ayuda-cabecera">
                         <p class="texto-secundario">
-                            Todos los comandos empiezan con {{ palabras_inicio_texto }}. Decí «{{ palabra_inicio }} ayuda» para abrir la lista.
+                            Todos los comandos empiezan con <span data-palabras-texto>{{ palabras_inicio_texto }}</span>. Decí «<span data-palabra-principal>{{ palabra_inicio }}</span> ayuda» para abrir la lista.
                         </p>
 
                         <button
@@ -122,8 +182,11 @@
                         </button>
                     </div>
 
+                    {# Menú desplegable (empieza oculto con el atributo «hidden»). #}
                     <div id="menu-ayuda" class="menu-ayuda" hidden>
+                        {# Un botón por cada categoría (LED, Servo, Sensor, Generales). {% for %} repite el bloque para cada elemento del diccionario de comandos_ayuda.py. #}
                         <div class="menu-ayuda-categorias" role="group" aria-label="Categorías de comandos">
+                            {# Repite para cada categoría: «clave» es leds/servo/sensor/generales y «categoria» trae su título, encabezado, resumen y comandos. #}
                             {% for clave, categoria in ayuda.items() %}
                             <button
                                 type="button"
@@ -138,6 +201,7 @@
                             {% endfor %}
                         </div>
 
+                        {# Segundo recorrido: dibuja la lista de comandos de cada categoría (oculta hasta que se elija). #}
                         {% for clave, categoria in ayuda.items() %}
                         <section
                             id="ayuda-{{ clave }}"
@@ -150,11 +214,12 @@
                             <p class="texto-secundario">{{ categoria.resumen }}</p>
 
                             <ul class="lista-comandos-detalle">
+                                {# Por cada comando: sus frases de ejemplo (con la palabra de inicio delante) y su explicación. #}
                                 {% for item in categoria.comandos %}
                                 <li>
                                     <span class="comando-frases">
                                         {% for frase in item.frases %}
-                                        <code><span class="palabra-clave">{{ palabra_inicio }}</span> {{ frase }}</code>
+                                        <code><span class="palabra-clave" data-palabra-principal>{{ palabra_inicio }}</span> {{ frase }}</code>
                                         {% endfor %}
                                     </span>
                                     <span class="comando-detalle">{{ item.detalle }}</span>
@@ -162,14 +227,13 @@
                                 {% endfor %}
                             </ul>
 
+                            {# Solo en la categoría LED: lista de nombres actuales. Queda vacía acá y la rellena voz.js (función dibujarAyudaLeds) con los nombres que cada persona les puso a sus LED. #}
                             {% if clave == "leds" %}
-                            <!-- Nombres actuales de los LED: los dibuja voz.js a partir de lo que
-                                 el usuario escribió en cada tarjeta, así que siempre están al día. -->
+                            
                             <p class="texto-secundario ayuda-leds-titulo">Con los nombres que tienen ahora:</p>
                             <ul
                                 id="ayuda-leds-actuales"
                                 class="lista-comandos-detalle"
-                                data-palabra="{{ palabra_inicio }}"
                             ></ul>
                             {% endif %}
                         </section>
@@ -181,6 +245,72 @@
         </section>
 
         <!-- ============ ILUMINACIÓN ============ -->
+        {# ═══ PANEL 1B: ASISTENTE DE VOZ (configuración) ═══ #}
+        {# Lo controla static/js/asistente.js. Los ajustes los guarda asistente.py en el servidor (datos/configuracion.json) con PUT /api/configuracion, así que valen para todos los navegadores. #}
+        <section class="panel panel-asistente" aria-labelledby="titulo-asistente">
+            <header class="panel-cabecera">
+                <span class="panel-icono" aria-hidden="true">
+                    <svg class="icono" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+                </span>
+                <div>
+                    <h2 id="titulo-asistente">Asistente de voz</h2>
+                    <p class="panel-descripcion">Elegí cómo se llama al asistente por voz y con qué palabras.</p>
+                </div>
+            </header>
+
+            <div class="asistente-contenido">
+                {# Los dos modos. Son botones de opción (radio): solo uno puede estar elegido. Al elegir uno se guarda al instante. #}
+                <fieldset class="asistente-modos">
+                    <legend class="etiqueta">Modo de activación</legend>
+
+                    <label class="opcion-modo">
+                        <input type="radio" name="modo-asistente" value="siempre" id="modo-siempre">
+                        <span class="opcion-modo-texto">
+                            <strong>Palabra en cada comando</strong>
+                            <span>Cada orden empieza con la palabra de activación: «<span data-palabra-principal>{{ palabra_inicio }}</span> encender led uno». Decir solo la palabra muestra el saludo.</span>
+                        </span>
+                    </label>
+
+                    <label class="opcion-modo">
+                        <input type="radio" name="modo-asistente" value="asistente" id="modo-asistente">
+                        <span class="opcion-modo-texto">
+                            <strong>Modo asistente</strong>
+                            <span>Se dice la palabra una sola vez: el asistente saluda y entiende las órdenes siguientes sin repetirla, hasta que pase el tiempo de espera o se diga «adiós».</span>
+                        </span>
+                    </label>
+                </fieldset>
+
+                {# Tiempo de espera del modo asistente (se guarda al salir del campo o con Enter). #}
+                <div class="asistente-espera" id="grupo-espera">
+                    <label class="etiqueta" for="asistente-espera">Tiempo de espera del modo asistente (segundos)</label>
+                    <input type="number" id="asistente-espera" inputmode="numeric" min="0" max="600" step="1" value="30">
+                    <p class="texto-secundario">Entre 5 y 600. Con 0 no vence nunca: solo «adiós» cierra la conversación.</p>
+                </div>
+
+                {# Palabras de activación: una lista editable. asistente.js dibuja cada palabra como una «etiqueta» con su botón para quitarla. #}
+                <div class="asistente-palabras">
+                    <span class="etiqueta" id="etiqueta-palabras">Palabras de activación</span>
+                    <ul id="lista-palabras-inicio" class="lista-palabras" aria-labelledby="etiqueta-palabras"></ul>
+                    <p class="texto-secundario">La primera es la que aparece en los ejemplos de la página. Pueden ser frases cortas («hola robot»).</p>
+
+                    <form id="formulario-palabra" class="formulario-palabra" novalidate>
+                        <label class="etiqueta" for="nueva-palabra">Agregar una palabra</label>
+                        <div class="fila-palabra">
+                            <input type="text" id="nueva-palabra" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Por ejemplo: jarvis">
+                            <button id="agregar-palabra" type="submit">Agregar</button>
+                        </div>
+                    </form>
+
+                    <button id="restablecer-palabras" class="boton-secundario" type="button">Restablecer las palabras de fábrica</button>
+                </div>
+
+                {# Avisos de resultado (guardado, o el motivo por el que una palabra se rechazó). #}
+                <p id="asistente-mensaje" class="aviso aviso-asistente" role="status" hidden></p>
+            </div>
+        </section>
+
+        {# ═══ PANEL 2: ILUMINACIÓN ═══ #}
+        {# Las tarjetas de los LED las crea voz.js (una por LED que informa app.py), con su nombre editable con el lápiz. #}
         <section class="panel panel-leds" aria-labelledby="titulo-leds">
             <header class="panel-cabecera">
                 <span class="panel-icono" aria-hidden="true">
@@ -192,13 +322,14 @@
                 </div>
             </header>
 
-            <!-- Las tarjetas las crea voz.js. data-palabra es la palabra de inicio principal,
-                 para escribir bajo cada LED cómo se lo nombra por voz. -->
-            <div id="lista-leds" class="lista-leds" data-palabra="{{ palabra_inicio }}">
+            
+            {# Contenedor de las tarjetas. El texto «Cargando LED...» se reemplaza al llegar el estado. (La palabra de inicio para el cartel «Por voz: …» la lee voz.js de <html data-palabra-inicio>.) #}
+            <div id="lista-leds" class="lista-leds">
                 Cargando LED...
             </div>
 
-            <!-- Los dos botones se pueden quitar sin afectar al resto de la página. -->
+            
+            {# Botones «Encender todos» y «Apagar todos» (voz.js: controlarTodosLeds). #}
             <div class="acciones-leds">
                 <button id="encender-todos" class="boton-encender" type="button">Encender todos</button>
                 <button id="apagar-todos" class="boton-apagar" type="button">Apagar todos</button>
@@ -206,6 +337,8 @@
         </section>
 
         <!-- ============ SERVOMOTOR ============ -->
+        {# ═══ PANEL 3: SERVOMOTOR ═══ #}
+        {# Dial dibujado con SVG y control deslizante. Lo mueve static/js/voz.js (actualizarIndicadorServo); el servo real se mueve con POST /api/servo. #}
         <section class="panel panel-servo" aria-labelledby="titulo-servo">
             <header class="panel-cabecera">
                 <span class="panel-icono" aria-hidden="true">
@@ -217,10 +350,11 @@
                 </div>
             </header>
 
+            {# Dos columnas: dial a la izquierda y controles a la derecha. #}
             <div class="servo-contenido">
 
-                <!-- Dial: la aguja es el cuerno de un servo que gira sobre su eje.
-                     Las clases dial-* y servo-* se colorean desde estilos.css. -->
+                
+                {# Dial: arco de progreso, marcas, números y aguja. La aguja (#aguja-servo) se gira con CSS (rotate) desde voz.js. Los colores salen de estilos.css. #}
                 <figure class="servo-indicador">
                     <svg
                         id="indicador-servo"
@@ -270,7 +404,7 @@
                         <text x="232.0" y="159.0" dy=".35em">180</text>
                         </g>
 
-                        <!-- Servo (cuerpo fijo, debajo del dial) -->
+                        
                         <g class="servo-ilustracion">
                             <rect class="servo-oreja" x="92" y="194" width="136" height="12" rx="3"/>
                             <circle class="servo-agujero" cx="103" cy="200" r="3.2"/>
@@ -284,8 +418,7 @@
                             <circle class="servo-carcasa" cx="160" cy="170" r="19"/>
                         </g>
 
-                        <!-- Aguja: cuerno del servo. Se dibuja apuntando a 0° (izquierda)
-                             y voz.js la gira desde el eje con rotate(). -->
+                        
                         <g id="aguja-servo" class="servo-aguja" style="transform: rotate(90deg)">
                             <path class="servo-cuerno" d="M160 159 L55 167.5 L55 172.5 L160 181 Z"/>
                             <circle class="servo-cuerno" cx="160" cy="170" r="12"/>
@@ -297,18 +430,21 @@
                         </g>
                     </svg>
 
+                    {# Texto «Posición actual: 90°» (#angulo-actual). #}
                     <figcaption class="servo-lectura">
                         <span>Posición actual</span>
                         <strong id="angulo-actual">90°</strong>
                     </figcaption>
                 </figure>
 
+                {# Controles del servo: posición solicitada, deslizador y botón de aplicar. #}
                 <div class="servo-controles">
                     <div class="angulo">
                         <span>Posición solicitada</span>
                         <strong id="valor-angulo">90°</strong>
                     </div>
 
+                    {# Deslizador (<input type="range">) de 0 a 180 grados; voz.js lo lee en #control-servo. #}
                     <div class="control-deslizador">
                         <label class="etiqueta" for="control-servo">
                             Ángulo del servo
@@ -330,10 +466,12 @@
                         </div>
                     </div>
 
+                    {# Mensaje de estado del servo («Última posición solicitada...»). #}
                     <p id="estado-servo" aria-live="polite">
                         Posición inicial: 90°
                     </p>
 
+                    {# Envía el ángulo elegido a app.py (POST /api/servo). #}
                     <button id="enviar-servo" type="button">
                         <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                         Aplicar posición
@@ -344,6 +482,8 @@
         </section>
 
         <!-- ============ SENSOR ULTRASÓNICO ============ -->
+        {# ═══ PANEL 4: SENSOR ULTRASÓNICO ═══ #}
+        {# Lectura de distancia y gráfico de los últimos 60 segundos. Lo controlan voz.js (activar y leer) y grafico.js (el gráfico). #}
         <section class="panel panel-distancia" aria-labelledby="titulo-sensor">
             <header class="panel-cabecera">
                 <span class="panel-icono" aria-hidden="true">
@@ -355,9 +495,11 @@
                 </div>
             </header>
 
+            {# Lectura numérica y gráfico. #}
             <div class="sensor-contenido">
 
                 <div class="sensor-lectura">
+                    {# Valor de distancia en cm (#distancia). Muestra «--» si el sensor está apagado. #}
                     <div class="medicion" aria-live="polite">
                         <strong id="distancia">--</strong>
                         <span>cm</span>
@@ -369,17 +511,18 @@
                         </p>
 
                         <p class="texto-secundario">
-                            Por voz: «{{ palabra_inicio }} activar sensor» o «{{ palabra_inicio }} desactivar sensor».
+                            Por voz: «<span data-palabra-principal>{{ palabra_inicio }}</span> activar sensor» o «<span data-palabra-principal>{{ palabra_inicio }}</span> desactivar sensor».
                         </p>
 
+                        {# Activa o desactiva la medición (voz.js: cambiarEstadoSensor -> POST /api/sensor). #}
                         <button id="alternar-sensor" type="button">
                             Activar medición
                         </button>
                     </div>
                 </div>
 
-                <!-- Gráfico de los últimos 60 segundos. Lo dibuja static/js/grafico.js
-                     con SVG propio (sin librerías, funciona sin internet). -->
+                
+                {# Gráfico: grafico.js dibuja dentro de #grafico-svg y usa los demás elementos #grafico-* (estadísticas, mensaje de vacío y globo con el valor). #}
                 <figure class="grafico-distancia" id="grafico-distancia">
                     <div class="grafico-cabecera">
                         <figcaption>Últimos 60 segundos</figcaption>
@@ -395,7 +538,9 @@
             </div>
         </section>
 
-        <!-- ============ AUTOMATIZACIONES ============ -->
+        
+        {# ═══ PANEL 5: AUTOMATIZACIONES ═══ #}
+        {# Lo controla static/js/automatizaciones.js; las reglas las guarda y evalúa automatizaciones.py en el servidor. #}
         <section class="panel panel-reglas" aria-labelledby="titulo-reglas">
             <header class="panel-cabecera">
                 <span class="panel-icono" aria-hidden="true">
@@ -405,15 +550,18 @@
                     <h2 id="titulo-reglas">Automatizaciones</h2>
                     <p class="panel-descripcion">Reglas que usan la distancia del sensor para controlar los LED y el servo.</p>
                 </div>
+                {# Pausa o reanuda todas las reglas. #}
                 <button id="pausar-reglas" class="boton-secundario" type="button" aria-pressed="false">
                     Pausar reglas
                 </button>
             </header>
 
+            {# Formulario «Si la distancia es [menor/mayor a] [N] cm, entonces [acción]». «novalidate» desactiva los avisos del navegador: la validación la hace el script y app.py. #}
             <form id="formulario-regla" class="formulario-regla" novalidate>
                 <div class="regla-fila">
                     <span class="regla-palabra">Si la distancia es</span>
 
+                    {# Condición: menor o mayor al umbral. #}
                     <select id="regla-condicion" aria-label="Condición de la distancia">
                         <option value="menor">menor a</option>
                         <option value="mayor">mayor a</option>
@@ -428,6 +576,7 @@
                 <div class="regla-fila">
                     <span class="regla-palabra">entonces</span>
 
+                    {# Acción de la regla: encender/apagar un LED, todos los LED o mover el servo. #}
                     <select id="regla-accion" aria-label="Acción a realizar">
                         <option value="led-on">Encender LED</option>
                         <option value="led-off">Apagar LED</option>
@@ -436,13 +585,16 @@
                         <option value="servo">Mover el servo a</option>
                     </select>
 
+                    {# Menú de LED: automatizaciones.js lo rellena con el NOMBRE actual de cada LED (valor = número). #}
                     <select id="regla-led" aria-label="Número de LED"></select>
 
+                    {# Ángulo del servo: solo se muestra cuando la acción es «Mover el servo a». #}
                     <label id="regla-angulo-grupo" class="regla-numero" hidden>
                         <input id="regla-angulo" type="number" inputmode="numeric" min="0" max="180" step="1" value="90" aria-label="Ángulo del servo en grados">
                         <span>°</span>
                     </label>
 
+                    {# Crea la regla (POST /api/reglas). #}
                     <button id="agregar-regla" type="submit">
                         <svg class="icono" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                         Agregar regla
@@ -450,18 +602,23 @@
                 </div>
             </form>
 
+            {# Aviso de resultado al crear una regla (aparece unos segundos). #}
             <p id="regla-mensaje" class="aviso aviso-regla" role="status" hidden></p>
 
+            {# Lista de reglas: automatizaciones.js agrega una fila por regla. #}
             <ul id="lista-reglas" class="lista-reglas"></ul>
 
             <p id="reglas-vacio" class="reglas-vacio">
-                Todavía no hay reglas. Creá una acá o decí «{{ palabra_inicio }} si hay algo a menos de veinte centímetros encender led uno».
+                Todavía no hay reglas. Creá una acá o decí «<span data-palabra-principal>{{ palabra_inicio }}</span> si hay algo a menos de veinte centímetros encender led uno».
             </p>
 
+            {# Aviso que explica por qué las reglas podrían no actuar (en pausa o sensor apagado). #}
             <p id="reglas-nota" class="aviso" hidden></p>
         </section>
 
-        <!-- ============ REGISTRO DE COMANDOS ============ -->
+        
+        {# ═══ PANEL 6: REGISTRO DE COMANDOS ═══ #}
+        {# Historial de lo que escuchó Vosk y de las reglas disparadas. Lo controla static/js/registro.js con datos de registro.py. #}
         <section class="panel panel-registro" aria-labelledby="titulo-registro">
             <header class="panel-cabecera">
                 <span class="panel-icono" aria-hidden="true">
@@ -473,9 +630,11 @@
                 </div>
             </header>
 
+            {# Filtro y botón «Limpiar». #}
             <div class="registro-herramientas">
                 <label class="registro-filtro">
                     <span class="etiqueta">Mostrar</span>
+                    {# Filtro: todo, órdenes, errores, ignoradas o reglas. #}
                     <select id="registro-filtro">
                         <option value="todo">Todo</option>
                         <option value="ordenes">Órdenes</option>
@@ -484,36 +643,57 @@
                         <option value="reglas">Reglas</option>
                     </select>
                 </label>
+                {# Vacía el historial (DELETE /api/registro). #}
                 <button id="limpiar-registro" class="boton-secundario" type="button">Limpiar</button>
             </div>
 
+            {# Lista de eventos (la más nueva arriba). #}
             <ol id="lista-registro" class="lista-registro"></ol>
 
             <p id="registro-vacio" class="reglas-vacio">
                 Todavía no hay actividad. Activá el micrófono y dictá una orden: acá vas a ver lo que entendió Vosk.
             </p>
 
+            {# Contador de eventos mostrados. #}
             <p id="registro-contador" class="registro-contador" role="status">0 eventos</p>
         </section>
 
+    {# ═══ SCRIPTS ═══ #}
+    {# Se cargan al final y con «defer» (se ejecutan cuando la página ya está armada). El ORDEN IMPORTA: voz.js va último porque usa las funciones que publican los anteriores (ayudaComandos, registroComandos, automatizaciones) y tema.js (ya cargado en el <head>). #}
     </main>
 
+    {# ayuda.js: abre y cierra el menú de ayuda. #}
     <script
         src="{{ url_for('static', filename='js/ayuda.js') }}"
         defer
     ></script>
+    {# grafico.js: dibuja el gráfico de distancia. #}
     <script
         src="{{ url_for('static', filename='js/grafico.js') }}"
         defer
     ></script>
+    {# automatizaciones.js: formulario y lista de reglas. #}
     <script
         src="{{ url_for('static', filename='js/automatizaciones.js') }}"
         defer
     ></script>
+    {# registro.js: panel «Registro de comandos». #}
     <script
         src="{{ url_for('static', filename='js/registro.js') }}"
         defer
     ></script>
+    {# voz-salida.js: lee en voz alta la respuesta del asistente. Va antes que asistente.js y voz.js porque también evita que Vosk escuche al asistente. #}
+    <script
+        src="{{ url_for('static', filename='js/voz-salida.js') }}"
+        defer
+    ></script>
+    {# asistente.js: panel «Asistente de voz» (modo, palabras de activación, tiempo de espera) y estado del asistente. Va antes que voz.js, que usa window.asistenteVoz. #}
+    <script
+        src="{{ url_for('static', filename='js/asistente.js') }}"
+        defer
+    ></script>
+
+    {# voz.js: LED (nombres, botones), micrófono y órdenes de voz, servo, sensor y sincronización. #}
     <script
         src="{{ url_for('static', filename='js/voz.js') }}"
         defer
