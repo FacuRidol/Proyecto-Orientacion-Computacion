@@ -2,7 +2,7 @@
 
 Aplicación web local desarrollada con **Python y Flask** para controlar desde un navegador cuatro LED, un servomotor SG90 y un sensor ultrasónico HC-SR04. Incluye controles manuales, comandos de voz, automatizaciones basadas en la distancia medida, un gráfico de mediciones y un registro de actividad.
 
-El reconocimiento de voz se procesa **localmente en la Raspberry Pi mediante Vosk**. El navegador captura el audio del micrófono y lo envía al servidor Flask para su transcripción; el asistente muestra sus respuestas como texto dentro de la página y no depende de servicios externos de reconocimiento.
+El reconocimiento de voz se procesa **localmente en la Raspberry Pi mediante Vosk**. El navegador captura el audio del micrófono y lo envía al servidor Flask para su transcripción; el asistente muestra sus respuestas como texto dentro de la página y puede leerlas en voz alta con la síntesis de voz del navegador (se activa o desactiva con una casilla), sin depender de servicios externos de reconocimiento.
 
 Este README reúne la guía para instalar y poner en marcha el proyecto desde cero y, al final, la bitácora de actualizaciones y mejoras documentadas durante su desarrollo.
 
@@ -266,7 +266,7 @@ A partir de este momento, ejecutá los comandos desde la carpeta principal del p
 ls
 ```
 
-Deberías encontrar, entre otros, `app.py`, `dispositivos.py`, `reconocimiento_voz.py`, `requirements.txt`, `templates/`, `static/`, `modelos/` y `scripts/`.
+Deberías encontrar, entre otros, `app.py`, `servidor/`, `funciones/`, `correcciones_vosk.json`, `requirements.txt`, `templates/`, `static/`, `modelos/` y `scripts/`.
 
 ---
 
@@ -394,7 +394,7 @@ Si `hostname -I` devuelve más de una dirección o no muestra la dirección que 
 PI_IP="192.168.1.50"
 ```
 
-**No cambies los nombres de archivo del comando.** Aunque incluyen la antigua dirección `172.16.4.102`, `app.py` busca exactamente estos dos nombres:
+**No cambies los nombres de archivo del comando.** Aunque incluyen la antigua dirección `172.16.4.102`, el servidor (`servidor/config.py`) busca exactamente estos dos nombres:
 
 ```text
 certs/172.16.4.102.pem
@@ -629,6 +629,17 @@ comando cambiar tema
 
 La interfaz incluye un panel de ayuda con las expresiones disponibles.
 
+### 11.5. Respuestas del asistente en voz alta
+
+Además de mostrarse como texto en el panel **Respuesta del asistente**, el asistente **dice sus respuestas en voz alta** desde el navegador: el saludo de bienvenida, la despedida y el aviso de cierre por inactividad de la conversación.
+
+- **Cómo funciona:** usa la síntesis de voz del propio navegador (Web Speech API, archivo `static/js/voz-salida.js`). El audio se genera en el dispositivo desde el que se abre la página, no en la Raspberry Pi, así que no requiere instalar nada en el servidor ni cambia el reconocimiento de Vosk.
+- **Activar o desactivar:** la casilla **«Leer las respuestas en voz alta»**, debajo de la respuesta del asistente, enciende o apaga esta función. Viene activada por defecto. Al desactivarla se corta de inmediato la lectura en curso.
+- **Se recuerda por navegador:** la elección se guarda en el navegador (`localStorage`, clave `vozRespuestasActivas`). Cada dispositivo o navegador tiene su propio ajuste y se conserva al recargar la página.
+- **Elección de voz:** se prefiere una voz en español, en este orden: es-AR, es-419, es-US, es-MX y es-ES; si no hay ninguna de esas usa la primera voz en español disponible. Las voces disponibles dependen del sistema operativo y del navegador.
+- **Sin eco:** mientras el asistente habla, y unos 0,6 segundos después, la página no envía audio del micrófono a Vosk. Así el asistente no se escucha a sí mismo ni toma su propia voz como una orden. Si el navegador deja la lectura colgada, un temporizador de seguridad la corta y libera el micrófono.
+- **Navegador sin síntesis de voz:** la casilla aparece deshabilitada y las respuestas siguen mostrándose solo como texto.
+
 ---
 
 ## 12. Configuración y datos persistentes
@@ -637,13 +648,13 @@ La carpeta `datos/` se crea automáticamente cuando la aplicación necesita guar
 
 | Archivo | Contenido |
 |---|---|
-| `datos/configuracion_voz.json` | Palabras de activación, sinónimos y modo del asistente. |
+| `datos/configuracion.json` | Palabras de activación, sinónimos y modo del asistente. |
 | `datos/nombres_leds.json` | Nombres personalizados de los LED. |
 | `datos/automatizaciones.json` | Reglas de automatización creadas por el usuario. |
 
 Estos datos permanecen después de reiniciar la aplicación. **No borres la carpeta `datos/` al actualizar el código** si querés conservar la configuración.
 
-Las palabras de activación, palabras clave y modo se modifican desde **Configuración del asistente** en la web. No es necesario editar `app.py` ni reiniciar Flask después de cada cambio.
+Las palabras de activación, palabras clave y modo se modifican desde **Configuración del asistente** en la web. No es necesario editar `servidor/config.py` ni reiniciar Flask después de cada cambio.
 
 La lista de activación admite hasta 15 palabras o frases, con un máximo de 4 palabras por expresión. Debe quedar al menos una palabra de activación.
 
@@ -784,6 +795,13 @@ Si una actualización modifica `requirements.txt`, volvé a ejecutar `pip instal
 - Si falta el modelo, activá el entorno y ejecutá `bash scripts/instalar_modelo.sh`.
 - Probá con palabras de activación cortas y claramente pronunciadas.
 
+### El asistente no habla
+
+- Comprobá que la casilla **«Leer las respuestas en voz alta»** esté marcada y que el volumen del dispositivo no esté silenciado.
+- Algunos navegadores no tienen síntesis de voz o no traen ninguna voz en español: en ese caso la casilla aparece deshabilitada o la voz suena con otro idioma. Instalá una voz en español en el sistema operativo o probá con Chrome, Edge, Firefox o Safari actualizados.
+- La voz sale por el dispositivo desde el que abrís la página, no por la Raspberry Pi.
+- El asistente solo habla el saludo, la despedida y el aviso de cierre por inactividad; el resultado de cada comando se muestra como texto.
+
 ### Aparece `ModuleNotFoundError: No module named 'RPi'`
 
 - Instalá `python3-rpi.gpio` o, si no está disponible, `python3-rpi-lgpio` mediante `apt`.
@@ -834,27 +852,39 @@ Si una actualización modifica `requirements.txt`, volvé a ejecutar `pip instal
 
 ```text
 REPOSITORIO/
-├── app.py                         # Aplicación Flask, rutas e intérprete de comandos
-├── dispositivos.py                # Control de GPIO, LED, servo y sensor
-├── reconocimiento_voz.py          # Integración con Vosk
-├── sensor_monitor.py              # Mediciones periódicas del HC-SR04
-├── automatizaciones.py             # Reglas basadas en distancia
-├── nombres_leds.py                 # Nombres personalizados de LED
-├── registro.py                     # Registro de comandos y eventos
-├── comandos_ayuda.py               # Ayuda de comandos mostrada en la web
-├── requirements.txt                # Dependencias Python
-├── scripts/
-│   └── instalar_modelo.sh          # Instalación del modelo de Vosk
-├── modelos/
-│   └── vosk-model-small-es-0.42/   # Modelo de reconocimiento en español
+├── app.py                         # Punto de entrada: crea la app Flask y levanta el servidor HTTPS
+├── servidor/                      # Servidor web: rutas HTTP e intérprete de órdenes habladas
+│   ├── config.py                  # Palabras de inicio, carpetas, puerto y certificados
+│   ├── servicios.py               # Instancias únicas: nombres de LED, asistente, reglas y monitor
+│   ├── texto.py, numeros.py       # Normalizar texto y números en español
+│   ├── vocabulario.py             # Verbos, palabras de LED y palabras reservadas
+│   ├── validaciones.py            # Qué nombres de LED y palabras de activación se aceptan
+│   ├── palabras_inicio.py         # Palabras de activación vigentes
+│   ├── rutas/                     # Rutas /api/... (una por tema)
+│   └── interprete/                # Intérprete de órdenes habladas
+├── funciones/                     # Hardware, voz y lógica que no depende de Flask
+│   ├── dispositivos.py            # Control de GPIO, LED, servo y sensor
+│   ├── reconocimiento_voz.py      # Integración con Vosk
+│   ├── sensor_monitor.py          # Mediciones periódicas del HC-SR04
+│   ├── automatizaciones.py        # Reglas basadas en distancia
+│   ├── nombres_leds.py            # Nombres personalizados de LED
+│   ├── asistente.py               # Modo, palabras de activación y sesión del asistente
+│   ├── registro.py                # Registro de comandos y eventos
+│   └── comandos_ayuda.py          # Ayuda de comandos mostrada en la web
+├── correcciones_vosk.json         # Correcciones del texto que entrega Vosk
 ├── templates/
-│   └── index.html                  # Página principal
+│   └── index.html                 # Página principal
 ├── static/
-│   ├── css/                        # Estilos de la interfaz
-│   └── js/                         # Lógica del navegador y captura de audio
-├── certs/                          # Se crea localmente; no subir a GitHub
-├── datos/                          # Se crea al guardar configuración
-└── env/                            # Se crea al instalar Python; no subir a GitHub
+│   ├── css/                       # Estilos de la interfaz
+│   └── js/                        # Lógica del navegador y captura de audio
+├── requirements.txt               # Dependencias Python
+├── scripts/
+│   └── instalar_modelo.sh         # Instalación del modelo de Vosk
+├── modelos/
+│   └── vosk-model-small-es-0.42/  # Modelo de reconocimiento en español
+├── certs/                         # Se crea localmente; no subir a GitHub
+├── datos/                         # Se crea al guardar configuración
+└── env/                           # Se crea al instalar Python; no subir a GitHub
 ```
 
 ---
@@ -871,7 +901,7 @@ REPOSITORIO/
 
 ---
 
-**Nota:** las conexiones indicadas corresponden a los GPIO definidos en `dispositivos.py`. Antes de alimentar el circuito, contrastá el pinout de tu modelo concreto de Raspberry Pi y comprobá el cableado físico. Las versiones de Raspberry Pi OS, Python y navegadores pueden cambiar; para una instalación nueva, utilizá las versiones soportadas disponibles y revisá las referencias oficiales si algún paquete cambió de nombre.
+**Nota:** las conexiones indicadas corresponden a los GPIO definidos en `funciones/dispositivos.py`. Antes de alimentar el circuito, contrastá el pinout de tu modelo concreto de Raspberry Pi y comprobá el cableado físico. Las versiones de Raspberry Pi OS, Python y navegadores pueden cambiar; para una instalación nueva, utilizá las versiones soportadas disponibles y revisá las referencias oficiales si algún paquete cambió de nombre.
 
 ---
 
@@ -948,26 +978,26 @@ La interfaz no usa fuentes ni íconos externos, así que sigue funcionando sin i
 
 ## Ayuda de comandos y dial del servo
 
-- **Ayuda de comandos:** el botón del panel de voz despliega un menú con cuatro categorías (LED, Servo, Sensor y Generales); cada una despliega su lista. El texto de las listas está en `comandos_ayuda.py`: para agregar o corregir un comando en la ayuda alcanza con editar ese archivo. La lógica de mostrar y ocultar está en `static/js/ayuda.js`.
-- **Agregar un comando nuevo:** en `app.py`, escribí una función `_interpretar_...` como las que están en la sección *Comandos de voz generales*, sumala a `INTERPRETES_GENERALES` y descríbela en `comandos_ayuda.py`.
+- **Ayuda de comandos:** el botón del panel de voz despliega un menú con cuatro categorías (LED, Servo, Sensor y Generales); cada una despliega su lista. El texto de las listas está en `funciones/comandos_ayuda.py`: para agregar o corregir un comando en la ayuda alcanza con editar ese archivo. La lógica de mostrar y ocultar está en `static/js/ayuda.js`.
+- **Agregar un comando nuevo:** en `servidor/interprete/generales.py` (o en un archivo nuevo de esa carpeta), escribí una función `interpretar_...` como las que ya están allí, sumala a `INTERPRETES_GENERALES` en `servidor/interprete/ordenes.py` y descríbela en `funciones/comandos_ayuda.py`.
 - **Dial del servo:** el panel del servomotor muestra un velocímetro de 0° a 180° cuya aguja es el cuerno de un servo. Indica la última posición aplicada (el SG90 no informa su posición real). Los colores del dial salen de las variables de `estilos.css`; `--color-servo-cuerpo` y `--color-aguja` permiten darle colores propios.
 - **Botones «Encender todos» / «Apagar todos»** en el panel de iluminación, equivalentes a los comandos de voz. Usan `POST /api/leds/todos` con `{"accion": "encender" | "apagar"}`.
 
 
 ## Automatizaciones, gráfico de distancia y registro
 
-**Cómo funciona el sensor ahora.** Un hilo en segundo plano (`sensor_monitor.py`) mide 4 veces por segundo mientras el sensor está activo. Antes se medía solo cuando una página lo pedía; ahora hay una única fuente de datos que comparten el número grande, el gráfico, las reglas y el comando «medir distancia». Si el hilo no estuviera corriendo, la aplicación mide directamente como antes.
+**Cómo funciona el sensor ahora.** Un hilo en segundo plano (`funciones/sensor_monitor.py`) mide 4 veces por segundo mientras el sensor está activo. Antes se medía solo cuando una página lo pedía; ahora hay una única fuente de datos que comparten el número grande, el gráfico, las reglas y el comando «medir distancia». Si el hilo no estuviera corriendo, la aplicación mide directamente como antes.
 
-**Automatizaciones** (`automatizaciones.py`, panel *Automatizaciones*):
+**Automatizaciones** (`funciones/automatizaciones.py`, panel *Automatizaciones*):
 
 - Una regla compara la distancia con un umbral (de 2 a 400 cm, el alcance del HC-SR04) y ejecuta una acción: encender o apagar un LED, encender o apagar todos, o mover el servo a un ángulo. Hasta 8 reglas.
-- Se dispara cuando la condición **empieza** a cumplirse, no en cada medición. Para evitar disparos falsos por el ruido del sensor hay tres protecciones: la condición debe cumplirse en 2 mediciones seguidas (`CONFIRMACIONES`), para volver a armarse la distancia debe alejarse 2 cm del umbral (`HISTERESIS_CM`) y pasan al menos 2 s entre dos disparos de la misma regla (`ENFRIAMIENTO_S`). Los tres valores están al comienzo de `automatizaciones.py`.
+- Se dispara cuando la condición **empieza** a cumplirse, no en cada medición. Para evitar disparos falsos por el ruido del sensor hay tres protecciones: la condición debe cumplirse en 2 mediciones seguidas (`CONFIRMACIONES`), para volver a armarse la distancia debe alejarse 2 cm del umbral (`HISTERESIS_CM`) y pasan al menos 2 s entre dos disparos de la misma regla (`ENFRIAMIENTO_S`). Los tres valores están al comienzo de `funciones/automatizaciones.py`.
 - Solo se evalúan mientras el sensor está activo. Una lectura sin eco válido (objeto muy lejos o que no refleja) se ignora.
 - Se crean desde el formulario del panel o por voz. Se guardan en `datos/automatizaciones.json` (la carpeta se crea sola) y sobreviven a un reinicio. **Al actualizar el código no borres la carpeta `datos/`.** La variable de entorno `ASISTENTE_DATOS` permite usar otra carpeta.
 
 **Gráfico de distancia** (`static/js/grafico.js`): línea de los últimos 60 segundos dibujada con SVG propio, sin librerías. Muestra mínimo, promedio y máximo, el umbral de cada regla como línea punteada y, al pasar el puntero, el valor exacto. Los datos están en el servidor, así que se ve completo al recargar o desde otro dispositivo. Con el sensor apagado queda congelado en la última medición.
 
-**Registro de comandos** (`registro.py`, `static/js/registro.js`): guarda los últimos 200 eventos **en memoria** (se vacía al reiniciar). Cada orden queda anotada con lo que escuchó Vosk y su resultado: *Orden*, *Error* o *Ignorada* (frase que no empezó con «comando»; sirve para ajustar el reconocimiento). Los disparos de las reglas aparecen como *Regla*. Tiene filtro y botón para limpiar.
+**Registro de comandos** (`funciones/registro.py`, `static/js/registro.js`): guarda los últimos 200 eventos **en memoria** (se vacía al reiniciar). Cada orden queda anotada con lo que escuchó Vosk y su resultado: *Orden*, *Error* o *Ignorada* (frase que no empezó con «comando»; sirve para ajustar el reconocimiento). Los disparos de las reglas aparecen como *Regla*. Tiene filtro y botón para limpiar.
 
 **Nuevos endpoints:**
 
@@ -986,7 +1016,7 @@ Las acciones posibles son `{"tipo": "led", "led": N, "encender": bool}`, `{"tipo
 
 ## Palabras para comenzar una orden
 
-Las palabras con las que puede empezar una orden se configuran en una lista al comienzo de `app.py`:
+Las palabras con las que puede empezar una orden se configuran en una lista al comienzo de `servidor/config.py`:
 
 ```python
 PALABRAS_DE_INICIO = [
@@ -1003,6 +1033,11 @@ Para cambiarlas alcanza con editar esa lista y reiniciar la aplicación; los men
 - La palabra debe estar **completa** y **al comienzo**: `robot encender led uno` funciona, pero `el robot encender led uno` y `robotica encender led uno` no. Una frase que no empieza con ninguna palabra de inicio se ignora (en el registro aparece como *Ignorada*).
 - Elegí palabras que el reconocedor entienda bien y que no se usen dentro de las órdenes (`led`, `giro`, `sensor`, `ayuda`, `reglas`…). Para comprobar qué transcribe Vosk, mirá el cuadro *Texto que interpreta Vosk* o el registro de comandos.
 - La lista no puede quedar vacía: si no tiene ninguna palabra válida, la aplicación no arranca y explica el motivo.
+
+## Respuestas del asistente en voz alta
+
+- Nuevo archivo `static/js/voz-salida.js`: lee en voz alta las respuestas del asistente con la síntesis de voz del navegador. Se agregó la casilla **«Leer las respuestas en voz alta»** en el panel de voz (`templates/index.html`).
+- La elección se guarda en cada navegador y mientras el asistente habla no se envía audio a Vosk (ver sección 11.5).
 
 ## Optimización y diagnóstico del reconocimiento de voz
 

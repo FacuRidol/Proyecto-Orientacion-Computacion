@@ -1184,7 +1184,7 @@ async function procesarComando(texto) {
 // orden de la frase. «esUnica» indica si la frase tenía una sola orden (solo entonces ciertos mensajes
 // reemplazan al resumen).
 async function aplicarResultadoOrden(datos, texto, esUnica) {
-    // FUNCIÓN 1 — Saludo: se dijo solo la palabra de activación. El saludo (únicamente texto) va en la burbuja
+    // FUNCIÓN 1 — Saludo: se dijo solo la palabra de activación. El saludo va (como texto y en voz alta) en la burbuja
     // «Respuesta del asistente».
     if (datos.bienvenida) {
         window.asistenteVoz?.respuesta(datos.mensaje);
