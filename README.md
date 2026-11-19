@@ -942,62 +942,12 @@ Las siguientes secciones conservan la documentación de mejoras, ajustes y detal
 
 ## Sexta clase
 
-- El archivo `Bitacora` incluye el título de esta clase, pero no contiene actividades registradas.
-
-
-## Actualizar el código sin perder HTTPS
-
-Al copiar los archivos modificados, no borres la carpeta `certs/` ni el entorno `env/` existente. El ZIP de entrega omite deliberadamente esos elementos locales; contiene el código y los scripts necesarios para instalar el componente de voz.
-
-
-## Actualización de interfaz y sincronización entre navegadores
-
-- Cada LED ahora tiene un único botón. Si está apagado muestra **Encender**; si está encendido muestra **Apagar**. Al pulsarlo, Flask consulta el estado del GPIO y lo alterna de forma atómica.
-- Todas las pestañas y navegadores que se conectan a esta misma instancia de Flask consultan `/api/estado` cada segundo. Así, los cambios realizados con botones o por voz se reflejan en las demás páginas sin recargarlas. Al volver a una pestaña, se solicita el estado inmediatamente.
-- El servidor devuelve el estado sin caché. Los LED se consultan leyendo sus pines GPIO; el ángulo del SG90 es la última posición solicitada (el servo SG90 no devuelve su posición física porque no tiene realimentación); el sensor muestra si su medición continua está activada.
-- La sincronización requiere que todos los navegadores se conecten a la misma Raspberry Pi y al mismo proceso Flask. Si se inicia más de una instancia independiente de la aplicación, cada proceso tendría su propio estado en memoria.
-
-## Sintaxis vigente de comandos de voz
-
-La referencia completa y actualizada está en la sección **Comandos de voz**, más arriba.
-
-## Personalizar colores y tema de la interfaz
-
-Todos los colores, las fuentes y los radios de borde se controlan desde el inicio de `static/css/estilos.css`, sin tocar el resto del archivo:
-
-- **Sección 1 · Personalización:** variables del tema claro (`--color-primario`, `--color-secundario`, `--color-fondo`, `--color-superficie`, `--color-texto`, `--color-exito`, `--color-peligro`, etc.).
-- **Sección 2 · Tema oscuro:** las mismas variables con valores para fondo oscuro.
-- **Sección 3 · Valores derivados:** los tonos suaves (fondos de íconos, avisos, LED encendido) se calculan solos a partir de los colores base. No hace falta editarlos.
-
-El botón de luna/sol del encabezado alterna entre el tema claro y el oscuro y recuerda la elección en ese navegador (`static/js/tema.js`). Si todavía no se eligió, usa el tema del sistema operativo.
-
-Para crear un tema nuevo, copiá el bloque `:root[data-tema="oscuro"]`, cambiale el nombre (por ejemplo `data-tema="verde"`) y ajustá los valores. Para dejar un tema fijo, escribí `<html lang="es" data-tema="verde">` en `templates/index.html` y quitá la línea que carga `tema.js`.
-
-La interfaz no usa fuentes ni íconos externos, así que sigue funcionando sin internet.
-
-
-## Ayuda de comandos y dial del servo
-
-- **Ayuda de comandos:** el botón del panel de voz despliega un menú con cuatro categorías (LED, Servo, Sensor y Generales); cada una despliega su lista. El texto de las listas está en `funciones/comandos_ayuda.py`: para agregar o corregir un comando en la ayuda alcanza con editar ese archivo. La lógica de mostrar y ocultar está en `static/js/ayuda.js`.
-- **Agregar un comando nuevo:** en `servidor/interprete/generales.py` (o en un archivo nuevo de esa carpeta), escribí una función `interpretar_...` como las que ya están allí, sumala a `INTERPRETES_GENERALES` en `servidor/interprete/ordenes.py` y descríbela en `funciones/comandos_ayuda.py`.
-- **Dial del servo:** el panel del servomotor muestra un velocímetro de 0° a 180° cuya aguja es el cuerno de un servo. Indica la última posición aplicada (el SG90 no informa su posición real). Los colores del dial salen de las variables de `estilos.css`; `--color-servo-cuerpo` y `--color-aguja` permiten darle colores propios.
-- **Botones «Encender todos» / «Apagar todos»** en el panel de iluminación, equivalentes a los comandos de voz. Usan `POST /api/leds/todos` con `{"accion": "encender" | "apagar"}`.
-
-
-## Automatizaciones, gráfico de distancia y registro
-
-**Cómo funciona el sensor ahora.** Un hilo en segundo plano (`funciones/sensor_monitor.py`) mide 4 veces por segundo mientras el sensor está activo. Antes se medía solo cuando una página lo pedía; ahora hay una única fuente de datos que comparten el número grande, el gráfico, las reglas y el comando «medir distancia». Si el hilo no estuviera corriendo, la aplicación mide directamente como antes.
-
-**Automatizaciones** (`funciones/automatizaciones.py`, panel *Automatizaciones*):
-
+- Un hilo en segundo plano (`funciones/sensor_monitor.py`) mide 4 veces por segundo mientras el sensor está activo. Antes se medía solo cuando una página lo pedía; ahora hay una única fuente de datos que comparten el número grande, el gráfico, las reglas y el comando «medir distancia». Si el hilo no estuviera corriendo, la aplicación mide directamente como antes.
 - Una regla compara la distancia con un umbral (de 2 a 400 cm, el alcance del HC-SR04) y ejecuta una acción: encender o apagar un LED, encender o apagar todos, o mover el servo a un ángulo. Hasta 8 reglas.
-- Se dispara cuando la condición **empieza** a cumplirse, no en cada medición. Para evitar disparos falsos por el ruido del sensor hay tres protecciones: la condición debe cumplirse en 2 mediciones seguidas (`CONFIRMACIONES`), para volver a armarse la distancia debe alejarse 2 cm del umbral (`HISTERESIS_CM`) y pasan al menos 2 s entre dos disparos de la misma regla (`ENFRIAMIENTO_S`). Los tres valores están al comienzo de `funciones/automatizaciones.py`.
-- Solo se evalúan mientras el sensor está activo. Una lectura sin eco válido (objeto muy lejos o que no refleja) se ignora.
-- Se crean desde el formulario del panel o por voz. Se guardan en `datos/automatizaciones.json` (la carpeta se crea sola) y sobreviven a un reinicio. **Al actualizar el código no borres la carpeta `datos/`.** La variable de entorno `ASISTENTE_DATOS` permite usar otra carpeta.
+- Gráfico de distancia: línea de los últimos 60 segundos dibujada con SVG propio, sin librerías. Muestra mínimo, promedio y máximo, el umbral de cada regla como línea punteada y, al pasar el puntero, el valor exacto. Los datos están en el servidor, así que se ve completo al recargar o desde otro dispositivo. Con el sensor apagado queda congelado en la última medición
+-Registro de comandos: guarda los últimos 200 eventos **en memoria** (se vacía al reiniciar). Cada orden queda anotada con lo que escuchó Vosk y su resultado: *Orden*, *Error* o *Ignorada* (frase que no empezó con «comando»; sirve para ajustar el reconocimiento). Los disparos de las reglas aparecen como *Regla*. Tiene filtro y botón para limpiar.
 
-**Gráfico de distancia** (`static/js/grafico.js`): línea de los últimos 60 segundos dibujada con SVG propio, sin librerías. Muestra mínimo, promedio y máximo, el umbral de cada regla como línea punteada y, al pasar el puntero, el valor exacto. Los datos están en el servidor, así que se ve completo al recargar o desde otro dispositivo. Con el sensor apagado queda congelado en la última medición.
-
-**Registro de comandos** (`funciones/registro.py`, `static/js/registro.js`): guarda los últimos 200 eventos **en memoria** (se vacía al reiniciar). Cada orden queda anotada con lo que escuchó Vosk y su resultado: *Orden*, *Error* o *Ignorada* (frase que no empezó con «comando»; sirve para ajustar el reconocimiento). Los disparos de las reglas aparecen como *Regla*. Tiene filtro y botón para limpiar.
+## Septima clase
 
 **Nuevos endpoints:**
 
@@ -1013,21 +963,8 @@ La interfaz no usa fuentes ni íconos externos, así que sigue funcionando sin i
 
 Las acciones posibles son `{"tipo": "led", "led": N, "encender": bool}`, `{"tipo": "leds", "encender": bool}` y `{"tipo": "servo", "angulo": 0-180}`.
 
-
 ## Palabras para comenzar una orden
-
-Las palabras con las que puede empezar una orden se configuran en una lista al comienzo de `servidor/config.py`:
-
-```python
-PALABRAS_DE_INICIO = [
-    "comando",
-    "robot",
-]
-```
-
-Para cambiarlas alcanza con editar esa lista y reiniciar la aplicación; los mensajes y la ayuda de la página se ajustan solos.
-
-- Se pueden agregar, quitar o reemplazar todas las que quieras. No importan las mayúsculas ni las tildes.
+- Se pueden agregar, quitar o reemplazar todas las palabras de activacion. No importan las mayúsculas ni las tildes.
 - Pueden ser **frases de varias palabras**, por ejemplo `"hola robot"`: entonces la orden es `hola robot encender led uno`.
 - La **primera** es la principal: es la que se usa en los ejemplos de la página. Los mensajes de error repiten la palabra que la persona realmente dijo.
 - La palabra debe estar **completa** y **al comienzo**: `robot encender led uno` funciona, pero `el robot encender led uno` y `robotica encender led uno` no. Una frase que no empieza con ninguna palabra de inicio se ignora (en el registro aparece como *Ignorada*).
@@ -1039,9 +976,9 @@ Para cambiarlas alcanza con editar esa lista y reiniciar la aplicación; los men
 - Nuevo archivo `static/js/voz-salida.js`: lee en voz alta las respuestas del asistente con la síntesis de voz del navegador. Se agregó la casilla **«Leer las respuestas en voz alta»** en el panel de voz (`templates/index.html`).
 - La elección se guarda en cada navegador y mientras el asistente habla no se envía audio a Vosk (ver sección 11.5).
 
-## Optimización y diagnóstico del reconocimiento de voz
+## Octava clase
 
-El envío de audio utiliza bloques de **0,5 segundos** de PCM mono a 16 kHz. Para evitar que una Raspberry Pi sobrecargada acumule solicitudes antiguas, el navegador mantiene una cola limitada:
+# Optimización del reconocimiento de voz
 
 - Se procesa una única solicitud de audio a la vez, para conservar el orden que necesita el reconocedor Vosk.
 - Se permiten hasta **3 bloques pendientes** (1,5 segundos), además del bloque que pudiera estar procesándose.
@@ -1049,27 +986,12 @@ El envío de audio utiliza bloques de **0,5 segundos** de PCM mono a 16 kHz. Par
 - Cuando hubo un descarte, el navegador informa la discontinuidad en la siguiente solicitud y el servidor ejecuta `Reset()` sobre el reconocedor antes de procesar ese bloque. El modelo ya cargado se conserva, pero se descarta el contexto acústico parcial para no unir palabras separadas por un hueco de audio.
 - Al apagar el micrófono se descartan los bloques que todavía estaban esperando, se deja terminar la solicitud en curso y luego se cierra la sesión de Vosk.
 
-### Ver las métricas
-
-Con el micrófono activo, pasá el puntero sobre el indicador de estado del micrófono para consultar el último diagnóstico. También podés abrir las herramientas de desarrollo del navegador (`F12`), pestaña **Consola**. Se registra una muestra cada 10 bloques y siempre que se descarta audio.
-
-Las métricas informan:
-
-| Métrica | Qué indica |
-|---|---|
-| Audio ida/vuelta | Tiempo desde que el navegador envía el bloque hasta que recibe la respuesta. Incluye red, espera en Flask y Vosk. |
-| Espera en Flask | Tiempo que la solicitud esperó para adquirir el bloqueo del reconocedor. Si aumenta, hay competencia por el servicio de voz. |
-| Vosk | Tiempo dedicado a procesar el bloque en el servidor. |
-| Espera local | Tiempo que el bloque estuvo esperando en la cola del navegador antes de enviarse. |
-| Cola | Cantidad de bloques pendientes frente al máximo permitido (3). |
-| Descartados | Cantidad de bloques que se quitaron de la cola por sobrecarga desde que se activó el micrófono. |
-
-El endpoint `POST /api/voz/audio` incluye un objeto `metricas` en su respuesta con `audio_ms`, `espera_bloqueo_ms`, `procesamiento_ms`, `servidor_total_ms` y `contexto_reiniciado`. Se mantienen los campos anteriores (`ok`, `final`, `texto` y `parcial`), por lo que la lógica de comandos y la interfaz existente siguen utilizando el mismo formato de reconocimiento.
-
-### Ajustar el límite de cola
+# Ajustar el límite de cola
 
 El límite se configura en `static/js/voz.js`, mediante `MAX_BLOQUES_PENDIENTES`. El valor predeterminado es **3**. Un valor mayor conserva más audio ante demoras breves, pero permite acumular más latencia; un valor menor reduce la espera máxima, pero aumenta la probabilidad de descartar audio cuando la Raspberry Pi está ocupada. Se recomienda mantener el valor predeterminado y observar las métricas antes de modificarlo.
 
-### Si el contador de descartes aumenta continuamente
+# Si el contador de descartes aumenta continuamente
 
 Eso indica que el servidor no está procesando audio a la velocidad a la que llega. En la Raspberry Pi, ejecutá `htop` mientras hablás y comprobá el uso de CPU y memoria. Cerrá pestañas duplicadas que no se estén utilizando y evitá ejecutar otras tareas pesadas. Si el tiempo de Vosk se mantiene por encima de los 500 ms por bloque, la Raspberry Pi no alcanza a procesar el audio en tiempo real con la carga actual.
+
+## Novena clase
